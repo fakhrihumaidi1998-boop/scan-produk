@@ -1,443 +1,737 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Scan P0008 - Betadine Gargle 100 ML</title>
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+<title>
+Scan P0008 V5 - Counting Botol
+</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
+<script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+
 <style>
+
 * {
     box-sizing: border-box;
 }
 
 body {
+
     margin: 0;
+
     padding: 15px;
+
     font-family: Arial, sans-serif;
+
     background: #f2f4f7;
+
     color: #222;
 }
 
+
 .container {
-    max-width: 700px;
+
+    max-width: 750px;
+
     margin: auto;
 }
 
+
 h1 {
+
     text-align: center;
+
     margin: 5px 0;
+
 }
+
 
 .subtitle {
+
     text-align: center;
+
     color: #666;
+
     margin-bottom: 15px;
+
 }
+
 
 .card {
+
     background: white;
+
     border-radius: 15px;
+
     padding: 15px;
+
     margin-bottom: 15px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+
+    box-shadow:
+        0 2px 10px
+        rgba(0,0,0,.08);
+
 }
+
 
 .camera-box {
+
     position: relative;
+
     width: 100%;
+
     background: #000;
+
     border-radius: 14px;
+
     overflow: hidden;
+
 }
 
+
 video {
+
     display: block;
+
     width: 100%;
+
     max-height: 70vh;
+
     object-fit: contain;
+
 }
+
+
+canvas {
+
+    max-width: 100%;
+
+    border-radius: 10px;
+
+}
+
 
 #photoCanvas,
 #workCanvas {
+
     display: none;
+
 }
+
+
+#resultCanvas {
+
+    width: 100%;
+
+    display: none;
+
+    background: #111;
+
+}
+
 
 .camera-guide {
+
     position: absolute;
-    left: 10%;
-    right: 10%;
-    top: 18%;
-    bottom: 18%;
-    border: 2px solid rgba(255,255,255,.8);
+
+    left: 8%;
+
+    right: 8%;
+
+    top: 15%;
+
+    bottom: 15%;
+
+    border:
+
+        2px solid
+        rgba(255,255,255,.8);
+
     border-radius: 15px;
+
     pointer-events: none;
+
 }
+
 
 .guide-text {
+
     position: absolute;
+
     top: 8px;
+
     left: 0;
+
     right: 0;
+
     text-align: center;
+
     color: white;
+
     font-size: 13px;
-    text-shadow: 0 1px 3px black;
+
+    text-shadow:
+
+        0 1px 4px
+        black;
+
 }
+
 
 button {
+
     width: 100%;
+
     padding: 14px;
+
     margin-top: 10px;
+
     border: none;
+
     border-radius: 11px;
+
     font-size: 16px;
+
     font-weight: bold;
+
     cursor: pointer;
+
 }
 
-.btn-blue {
-    background: #1769aa;
-    color: white;
-}
-
-.btn-green {
-    background: #16803c;
-    color: white;
-}
-
-.btn-gray {
-    background: #e7ebef;
-    color: #222;
-}
-
-.btn-red {
-    background: #c62828;
-    color: white;
-}
 
 button:disabled {
+
     opacity: .5;
-    cursor: not-allowed;
+
 }
+
+
+.btn-blue {
+
+    background: #1769aa;
+
+    color: white;
+
+}
+
+
+.btn-green {
+
+    background: #16803c;
+
+    color: white;
+
+}
+
+
+.btn-orange {
+
+    background: #d97706;
+
+    color: white;
+
+}
+
+
+.btn-gray {
+
+    background: #e7ebef;
+
+    color: #222;
+
+}
+
 
 .label {
+
     margin-top: 10px;
+
     color: #777;
+
     font-size: 13px;
+
 }
+
 
 .value {
+
     margin-top: 4px;
-    font-size: 18px;
+
+    font-size: 19px;
+
     font-weight: bold;
+
 }
+
 
 .success {
+
     color: #16803c;
+
 }
+
 
 .warning {
+
     color: #b26a00;
+
 }
+
 
 .danger {
+
     color: #c62828;
+
 }
+
+
+.big-number {
+
+    text-align: center;
+
+    font-size: 55px;
+
+    font-weight: bold;
+
+    margin: 10px 0;
+
+}
+
 
 .progress {
+
     width: 100%;
+
     height: 10px;
+
     margin-top: 10px;
+
     background: #ddd;
+
     border-radius: 20px;
+
     overflow: hidden;
+
 }
+
 
 .progress-bar {
+
     height: 100%;
+
     width: 0%;
+
     background: #1769aa;
+
     transition: width .2s;
+
 }
+
 
 .photo-preview {
+
     width: 100%;
+
     border-radius: 12px;
+
     margin-top: 12px;
+
     display: none;
+
 }
+
 
 pre {
+
     background: #111;
+
     color: #00ff88;
+
     padding: 12px;
+
     border-radius: 10px;
+
     white-space: pre-wrap;
+
     word-break: break-word;
+
     max-height: 300px;
+
     overflow: auto;
+
     font-size: 12px;
+
 }
+
 
 .small {
+
     color: #666;
+
     font-size: 12px;
+
     line-height: 1.5;
+
 }
 
-.status-ok {
-    background: #e4f6e9;
-    padding: 10px;
+
+.info-box {
+
+    background: #eef6ff;
+
     border-radius: 10px;
+
+    padding: 10px;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
 }
 
-.status-warning {
-    background: #fff4d6;
-    padding: 10px;
-    border-radius: 10px;
-}
-
-.status-error {
-    background: #ffe5e5;
-    padding: 10px;
-    border-radius: 10px;
-}
 </style>
+
 </head>
+
 
 <body>
 
+
 <div class="container">
 
-    <h1>📷 Scan Produk V4</h1>
 
-    <div class="subtitle">
-        Test P0008 — Betadine Mouthwash & Gargle 100 ML
-    </div>
+<h1>
+📷 Scan Produk V5
+</h1>
 
 
-    <!-- ================================================= -->
-    <!-- CAMERA -->
-    <!-- ================================================= -->
+<div class="subtitle">
 
-    <div class="card">
+P0008 — BETADINE MOUTHWASH AND GARGLE 100 ML
 
-        <div class="camera-box">
+</div>
 
-            <video
-                id="video"
-                autoplay
-                playsinline>
-            </video>
 
-            <div class="camera-guide"></div>
+<!-- ================================================= -->
+<!-- CAMERA -->
+<!-- ================================================= -->
 
-            <div class="guide-text">
-                Arahkan label produk ke dalam kotak
-            </div>
 
-        </div>
+<div class="card">
 
-        <canvas id="photoCanvas"></canvas>
 
-        <canvas id="workCanvas"></canvas>
+<div class="camera-box">
 
 
-        <button
-            class="btn-blue"
-            id="btnCamera"
-            onclick="startCamera()">
+<video
+    id="video"
+    autoplay
+    playsinline>
+</video>
 
-            📷 BUKA KAMERA
 
-        </button>
+<div class="camera-guide"></div>
 
 
-        <button
-            class="btn-green"
-            id="btnPhoto"
-            onclick="takePhoto()"
-            disabled>
+<div class="guide-text">
 
-            📸 FOTO PRODUK
+Posisikan semua botol terlihat jelas
 
-        </button>
+</div>
 
 
-        <button
-            class="btn-gray"
-            onclick="switchCamera()">
+</div>
 
-            🔄 GANTI KAMERA
 
-        </button>
+<canvas id="photoCanvas"></canvas>
 
+<canvas id="workCanvas"></canvas>
 
-        <button
-            class="btn-gray"
-            onclick="resetScan()">
 
-            ♻️ ULANGI SCAN
+<button
+    class="btn-blue"
+    id="btnCamera"
+    onclick="startCamera()">
 
-        </button>
+📷 BUKA KAMERA
 
-    </div>
+</button>
 
 
-    <!-- ================================================= -->
-    <!-- PHOTO -->
-    <!-- ================================================= -->
+<button
+    class="btn-green"
+    id="btnPhoto"
+    onclick="takePhoto()"
+    disabled>
 
-    <div class="card">
+📸 FOTO & HITUNG BOTOL
 
-        <div class="label">
-            Foto yang dianalisis
-        </div>
+</button>
 
-        <img
-            id="photoPreview"
-            class="photo-preview">
 
-    </div>
+<button
+    class="btn-gray"
+    onclick="switchCamera()">
 
+🔄 GANTI KAMERA
 
-    <!-- ================================================= -->
-    <!-- STATUS -->
-    <!-- ================================================= -->
+</button>
 
-    <div class="card">
 
-        <div class="label">
-            Status
-        </div>
+<button
+    class="btn-gray"
+    onclick="resetScan()">
 
-        <div
-            id="status"
-            class="value">
+♻️ ULANGI
 
-            Kamera belum aktif
+</button>
 
-        </div>
 
-        <div class="progress">
+</div>
 
-            <div
-                id="progressBar"
-                class="progress-bar">
-            </div>
 
-        </div>
+<!-- ================================================= -->
+<!-- STATUS -->
+<!-- ================================================= -->
 
-    </div>
 
+<div class="card">
 
-    <!-- ================================================= -->
-    <!-- RESULT -->
-    <!-- ================================================= -->
 
-    <div class="card">
+<div class="label">
 
-        <div class="label">
-            Produk
-        </div>
+Status
 
-        <div
-            id="product"
-            class="value">
+</div>
 
-            Belum dianalisis
 
-        </div>
+<div
+    id="status"
+    class="value">
 
+Kamera belum aktif
 
-        <div class="label">
-            Kode Produk
-        </div>
+</div>
 
-        <div
-            id="code"
-            class="value">
 
-            -
+<div class="progress">
 
-        </div>
+<div
+    id="progressBar"
+    class="progress-bar">
+</div>
 
+</div>
 
-        <div class="label">
-            Ukuran
-        </div>
 
-        <div
-            id="size"
-            class="value">
+</div>
 
-            -
 
-        </div>
+<!-- ================================================= -->
+<!-- PRODUCT -->
+<!-- ================================================= -->
 
 
-        <div class="label">
-            Kecocokan
-        </div>
+<div class="card">
 
-        <div
-            id="confidence"
-            class="value">
 
-            -
+<div class="label">
 
-        </div>
+Produk
 
-    </div>
+</div>
 
 
-    <!-- ================================================= -->
-    <!-- OCR -->
-    <!-- ================================================= -->
+<div
+    id="product"
+    class="value">
 
-    <div class="card">
+Belum dianalisis
 
-        <div class="label">
-            🔤 Hasil OCR
-        </div>
+</div>
 
-        <pre id="ocrText">
+
+<div class="label">
+
+Kode Produk
+
+</div>
+
+
+<div
+    id="code"
+    class="value">
+
+-
+
+</div>
+
+
+<div class="label">
+
+Ukuran
+
+</div>
+
+
+<div
+    id="size"
+    class="value">
+
+-
+
+</div>
+
+
+<div class="label">
+
+OCR Confidence
+
+</div>
+
+
+<div
+    id="confidence"
+    class="value">
+
+-
+
+</div>
+
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- COUNT -->
+<!-- ================================================= -->
+
+
+<div class="card">
+
+
+<div class="label">
+
+📦 JUMLAH BOTOL TERDETEKSI
+
+</div>
+
+
+<div
+    id="count"
+    class="big-number">
+
+-
+
+</div>
+
+
+<div
+    id="countStatus"
+    class="value">
+
+Belum dihitung
+
+</div>
+
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- DETECTION IMAGE -->
+<!-- ================================================= -->
+
+
+<div class="card">
+
+
+<div class="label">
+
+🔎 Hasil Deteksi Objek
+
+</div>
+
+
+<canvas
+    id="resultCanvas">
+</canvas>
+
+
+<div class="small">
+
+Kotak pada gambar menunjukkan objek
+yang dianggap sebagai botol.
+
+</div>
+
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- OCR -->
+<!-- ================================================= -->
+
+
+<div class="card">
+
+
+<div class="label">
+
+🔤 Hasil OCR
+
+</div>
+
+
+<pre id="ocrText">
+
 Belum ada hasil OCR.
-        </pre>
 
-    </div>
+</pre>
 
 
-    <!-- ================================================= -->
-    <!-- INFO -->
-    <!-- ================================================= -->
+</div>
 
-    <div class="card">
 
-        <div class="label">
-            Target V4
-        </div>
+<!-- ================================================= -->
+<!-- INFO -->
+<!-- ================================================= -->
 
-        <div class="small">
 
-            Sistem sementara hanya mengenali satu produk:
+<div class="card">
 
-            <br><br>
 
-            <b>P0008</b><br>
-            BETADINE MOUTHWASH AND GARGLE 100 ML
+<div class="info-box">
 
-            <br><br>
+<b>Catatan V5</b>
 
-            Belum ada object detection dan belum ada
-            perhitungan Sampel/Sampel Pertinggal pada versi ini.
+<br><br>
 
-        </div>
+Versi ini menggunakan analisis gambar
+berbasis kontur sebagai prototype
+penghitungan botol.
 
-    </div>
+<br><br>
+
+Untuk penggunaan produksi,
+bagian counting nantinya sebaiknya
+diganti dengan model Object Detection
+yang dilatih khusus untuk kemasan produk.
+
+</div>
+
+
+</div>
+
 
 </div>
 
@@ -446,17 +740,19 @@ Belum ada hasil OCR.
 
 
 // =====================================================
-// MASTER PRODUK
-// HANYA P0008
+// MASTER
 // =====================================================
+
 
 const PRODUCT = {
 
     code: "P0008",
 
-    name: "BETADINE MOUTHWASH AND GARGLE 100 ML",
+    name:
+        "BETADINE MOUTHWASH AND GARGLE 100 ML",
 
-    requiredSize: "100 ML",
+    size:
+        "100 ML",
 
     aliases: [
 
@@ -486,52 +782,73 @@ const PRODUCT = {
 
 
 // =====================================================
-// CAMERA STATE
+// STATE
 // =====================================================
+
 
 let stream = null;
 
-let facingMode = "environment";
+let facingMode =
+    "environment";
 
 let lastPhoto = null;
 
 
 // =====================================================
-// ELEMENT
+// ELEMENTS
 // =====================================================
 
+
 const video =
-    document.getElementById("video");
+    document.getElementById(
+        "video"
+    );
+
 
 const photoCanvas =
-    document.getElementById("photoCanvas");
+    document.getElementById(
+        "photoCanvas"
+    );
 
-const workCanvas =
-    document.getElementById("workCanvas");
+
+const resultCanvas =
+    document.getElementById(
+        "resultCanvas"
+    );
+
 
 const photoPreview =
-    document.getElementById("photoPreview");
+    document.getElementById(
+        "photoPreview"
+    );
+
 
 const btnPhoto =
-    document.getElementById("btnPhoto");
+    document.getElementById(
+        "btnPhoto"
+    );
 
 
 // =====================================================
 // STATUS
 // =====================================================
 
+
 function setStatus(text) {
 
-    document.getElementById("status")
-        .innerText = text;
+    document.getElementById(
+        "status"
+    ).innerText = text;
 
 }
 
 
 function setProgress(value) {
 
-    document.getElementById("progressBar")
-        .style.width = value + "%";
+    document.getElementById(
+        "progressBar"
+    ).style.width =
+        value + "%";
 
 }
 
@@ -540,15 +857,22 @@ function setProgress(value) {
 // START CAMERA
 // =====================================================
 
+
 async function startCamera() {
 
     try {
 
-        setStatus("Membuka kamera...");
+        setStatus(
+            "Membuka kamera..."
+        );
+
         setProgress(5);
 
-        if (!navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia) {
+
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
 
             throw new Error(
                 "Browser tidak mendukung kamera."
@@ -562,7 +886,8 @@ async function startCamera() {
             stream
                 .getTracks()
                 .forEach(
-                    track => track.stop()
+                    track =>
+                        track.stop()
                 );
 
         }
@@ -575,15 +900,22 @@ async function startCamera() {
                 video: {
 
                     facingMode: {
-                        ideal: facingMode
+
+                        ideal:
+                            facingMode
+
                     },
 
                     width: {
+
                         ideal: 1920
+
                     },
 
                     height: {
+
                         ideal: 1080
+
                     }
 
                 },
@@ -593,19 +925,22 @@ async function startCamera() {
             });
 
 
-        video.srcObject = stream;
+        video.srcObject =
+            stream;
 
 
         await video.play();
 
 
-        btnPhoto.disabled = false;
+        btnPhoto.disabled =
+            false;
 
 
         setProgress(100);
 
+
         setStatus(
-            "✅ Kamera aktif — siap mengambil foto"
+            "✅ Kamera aktif — siap foto"
         );
 
     }
@@ -632,12 +967,17 @@ async function startCamera() {
 // SWITCH CAMERA
 // =====================================================
 
+
 async function switchCamera() {
 
     facingMode =
-        facingMode === "environment"
+        facingMode ===
+        "environment"
+
         ? "user"
+
         : "environment";
+
 
     await startCamera();
 
@@ -648,9 +988,12 @@ async function switchCamera() {
 // TAKE PHOTO
 // =====================================================
 
+
 function takePhoto() {
 
-    if (!video.videoWidth) {
+    if (
+        !video.videoWidth
+    ) {
 
         alert(
             "Kamera belum siap."
@@ -664,6 +1007,7 @@ function takePhoto() {
     const width =
         video.videoWidth;
 
+
     const height =
         video.videoHeight;
 
@@ -671,12 +1015,14 @@ function takePhoto() {
     photoCanvas.width =
         width;
 
+
     photoCanvas.height =
         height;
 
 
     const ctx =
-        photoCanvas.getContext("2d");
+        photoCanvas
+        .getContext("2d");
 
 
     ctx.drawImage(
@@ -695,500 +1041,12 @@ function takePhoto() {
         photoCanvas;
 
 
-    photoPreview.src =
-        photoCanvas.toDataURL(
-            "image/jpeg",
-            0.95
-        );
-
-
-    photoPreview.style.display =
-        "block";
-
-
     setStatus(
-        "📸 Foto berhasil diambil — mulai analisis..."
+        "📸 Foto diambil — identifikasi produk..."
     );
 
 
-    analyzePhoto();
-
-}
-
-
-// =====================================================
-// CREATE CANVAS
-// =====================================================
-
-function makeCanvas(
-    width,
-    height
-) {
-
-    const c =
-        document.createElement("canvas");
-
-    c.width = width;
-    c.height = height;
-
-    return c;
-
-}
-
-
-// =====================================================
-// RESIZE
-// =====================================================
-
-function resizeCanvas(
-    source,
-    scale
-) {
-
-    const c =
-        makeCanvas(
-
-            Math.round(
-                source.width * scale
-            ),
-
-            Math.round(
-                source.height * scale
-            )
-
-        );
-
-
-    const ctx =
-        c.getContext("2d");
-
-    ctx.imageSmoothingEnabled = true;
-
-    ctx.drawImage(
-
-        source,
-
-        0,
-        0,
-        c.width,
-        c.height
-
-    );
-
-
-    return c;
-
-}
-
-
-// =====================================================
-// GRAYSCALE
-// =====================================================
-
-function makeGray(source) {
-
-    const c =
-        makeCanvas(
-            source.width,
-            source.height
-        );
-
-    const ctx =
-        c.getContext("2d");
-
-
-    ctx.drawImage(
-        source,
-        0,
-        0
-    );
-
-
-    const image =
-        ctx.getImageData(
-
-            0,
-            0,
-            c.width,
-            c.height
-
-        );
-
-
-    const data =
-        image.data;
-
-
-    for (
-        let i = 0;
-        i < data.length;
-        i += 4
-    ) {
-
-        const gray =
-            0.299 * data[i] +
-            0.587 * data[i + 1] +
-            0.114 * data[i + 2];
-
-
-        data[i] = gray;
-        data[i + 1] = gray;
-        data[i + 2] = gray;
-
-    }
-
-
-    ctx.putImageData(
-        image,
-        0,
-        0
-    );
-
-
-    return c;
-
-}
-
-
-// =====================================================
-// CONTRAST
-// =====================================================
-
-function makeContrast(
-    source,
-    factor
-) {
-
-    const c =
-        makeCanvas(
-            source.width,
-            source.height
-        );
-
-
-    const ctx =
-        c.getContext("2d");
-
-
-    ctx.drawImage(
-        source,
-        0,
-        0
-    );
-
-
-    const image =
-        ctx.getImageData(
-
-            0,
-            0,
-            c.width,
-            c.height
-
-        );
-
-
-    const data =
-        image.data;
-
-
-    const intercept =
-        128 * (1 - factor);
-
-
-    for (
-        let i = 0;
-        i < data.length;
-        i += 4
-    ) {
-
-        data[i] =
-            data[i] * factor +
-            intercept;
-
-        data[i + 1] =
-            data[i + 1] * factor +
-            intercept;
-
-        data[i + 2] =
-            data[i + 2] * factor +
-            intercept;
-
-    }
-
-
-    ctx.putImageData(
-        image,
-        0,
-        0
-    );
-
-
-    return c;
-
-}
-
-
-// =====================================================
-// THRESHOLD
-// =====================================================
-
-function makeThreshold(
-    source,
-    level
-) {
-
-    const c =
-        makeCanvas(
-            source.width,
-            source.height
-        );
-
-
-    const ctx =
-        c.getContext("2d");
-
-
-    ctx.drawImage(
-        source,
-        0,
-        0
-    );
-
-
-    const image =
-        ctx.getImageData(
-
-            0,
-            0,
-            c.width,
-            c.height
-
-        );
-
-
-    const data =
-        image.data;
-
-
-    for (
-        let i = 0;
-        i < data.length;
-        i += 4
-    ) {
-
-        const gray =
-            0.299 * data[i] +
-            0.587 * data[i + 1] +
-            0.114 * data[i + 2];
-
-
-        const value =
-            gray >= level
-            ? 255
-            : 0;
-
-
-        data[i] = value;
-        data[i + 1] = value;
-        data[i + 2] = value;
-
-    }
-
-
-    ctx.putImageData(
-        image,
-        0,
-        0
-    );
-
-
-    return c;
-
-}
-
-
-// =====================================================
-// CENTER CROP
-// =====================================================
-
-function centerCrop(source) {
-
-    const cropWidth =
-        Math.floor(
-            source.width * 0.72
-        );
-
-    const cropHeight =
-        Math.floor(
-            source.height * 0.60
-        );
-
-
-    const x =
-        Math.floor(
-            (source.width - cropWidth) / 2
-        );
-
-    const y =
-        Math.floor(
-            (source.height - cropHeight) / 2
-        );
-
-
-    const c =
-        makeCanvas(
-            cropWidth,
-            cropHeight
-        );
-
-
-    const ctx =
-        c.getContext("2d");
-
-
-    ctx.drawImage(
-
-        source,
-
-        x,
-        y,
-        cropWidth,
-        cropHeight,
-
-        0,
-        0,
-        cropWidth,
-        cropHeight
-
-    );
-
-
-    return c;
-
-}
-
-
-// =====================================================
-// CREATE OCR VARIANTS
-// =====================================================
-
-function createVariants(source) {
-
-    const variants = [];
-
-
-    // ORIGINAL
-    variants.push({
-
-        name: "Original",
-
-        canvas:
-            resizeCanvas(
-                source,
-                2
-            )
-
-    });
-
-
-    // GRAYSCALE
-    const gray =
-        makeGray(source);
-
-
-    variants.push({
-
-        name: "Grayscale",
-
-        canvas:
-            resizeCanvas(
-                gray,
-                2
-            )
-
-    });
-
-
-    // CONTRAST
-    const contrast =
-        makeContrast(
-            gray,
-            2.2
-        );
-
-
-    variants.push({
-
-        name: "Contrast",
-
-        canvas:
-            resizeCanvas(
-                contrast,
-                2
-            )
-
-    });
-
-
-    // THRESHOLD
-    const threshold =
-        makeThreshold(
-            gray,
-            165
-        );
-
-
-    variants.push({
-
-        name: "Threshold",
-
-        canvas:
-            resizeCanvas(
-                threshold,
-                2
-            )
-
-    });
-
-
-    // CENTER CROP
-    const crop =
-        centerCrop(source);
-
-
-    variants.push({
-
-        name: "Center Crop",
-
-        canvas:
-            resizeCanvas(
-                crop,
-                2.5
-            )
-
-    });
-
-
-    // CENTER CROP GRAY
-    const cropGray =
-        makeGray(crop);
-
-
-    variants.push({
-
-        name: "Center Crop Gray",
-
-        canvas:
-            resizeCanvas(
-                cropGray,
-                2.5
-            )
-
-    });
-
-
-    return variants;
+    analyzeProductAndCount();
 
 }
 
@@ -1196,6 +1054,7 @@ function createVariants(source) {
 // =====================================================
 // NORMALIZE TEXT
 // =====================================================
+
 
 function normalizeText(text) {
 
@@ -1205,9 +1064,15 @@ function normalizeText(text) {
 
         .replace(/[|]/g, "I")
 
-        .replace(/[^A-Z0-9+&\s]/g, " ")
+        .replace(
+            /[^A-Z0-9+&\s]/g,
+            " "
+        )
 
-        .replace(/\s+/g, " ")
+        .replace(
+            /\s+/g,
+            " "
+        )
 
         .trim();
 
@@ -1215,78 +1080,50 @@ function normalizeText(text) {
 
 
 // =====================================================
-// NORMALIZE COMMON OCR ERRORS
+// FIX OCR NUMBERS
 // =====================================================
+
 
 function fixOCRNumbers(text) {
 
-    let t =
-        text.toUpperCase();
+    return text
 
+        .toUpperCase()
 
-    // 100
-    t =
-        t.replace(
+        .replace(
             /\bI00\b/g,
             "100"
-        );
+        )
 
-    t =
-        t.replace(
+        .replace(
             /\bL00\b/g,
             "100"
-        );
+        )
 
-    t =
-        t.replace(
+        .replace(
             /\bIOO\b/g,
             "100"
-        );
+        )
 
-    t =
-        t.replace(
+        .replace(
             /\bLOO\b/g,
             "100"
         );
-
-
-    // 190
-    t =
-        t.replace(
-            /\bI90\b/g,
-            "190"
-        );
-
-    t =
-        t.replace(
-            /\bL90\b/g,
-            "190"
-        );
-
-
-    return t;
 
 }
 
 
 // =====================================================
-// EXTRACT SIZE
+// SIZE
 // =====================================================
 
-function extract100ML(text) {
+
+function has100ML(text) {
 
     let t =
         fixOCRNumbers(text);
 
 
-    t =
-        t.replace(
-            /(\d+)\s*(M[L1I])\b/g,
-            "$1 ML"
-        );
-
-
-    // langsung 100 ML
     if (
         /\b100\s*ML\b/.test(t)
     ) {
@@ -1296,10 +1133,8 @@ function extract100ML(text) {
     }
 
 
-    // OCR kadang hanya membaca "100"
-    // tetapi harus dekat dengan ML
     if (
-        /\b100\b[\s\S]{0,8}\bML\b/.test(t)
+        /\b100\b[\s\S]{0,10}\bML\b/.test(t)
     ) {
 
         return true;
@@ -1316,7 +1151,8 @@ function extract100ML(text) {
 // LEVENSHTEIN
 // =====================================================
 
-function levenshtein(a, b) {
+
+function levenshtein(a,b) {
 
     const matrix = [];
 
@@ -1356,12 +1192,12 @@ function levenshtein(a, b) {
         ) {
 
             if (
-                b.charAt(i - 1) ===
-                a.charAt(j - 1)
+                b.charAt(i-1) ===
+                a.charAt(j-1)
             ) {
 
                 matrix[i][j] =
-                    matrix[i - 1][j - 1];
+                    matrix[i-1][j-1];
 
             }
 
@@ -1370,11 +1206,11 @@ function levenshtein(a, b) {
                 matrix[i][j] =
                     Math.min(
 
-                        matrix[i - 1][j - 1] + 1,
+                        matrix[i-1][j-1]+1,
 
-                        matrix[i][j - 1] + 1,
+                        matrix[i][j-1]+1,
 
-                        matrix[i - 1][j] + 1
+                        matrix[i-1][j]+1
 
                     );
 
@@ -1394,7 +1230,8 @@ function levenshtein(a, b) {
 // SIMILARITY
 // =====================================================
 
-function similarity(a, b) {
+
+function similarity(a,b) {
 
     a =
         normalizeText(a);
@@ -1403,13 +1240,12 @@ function similarity(a, b) {
         normalizeText(b);
 
 
-    if (!a || !b) {
+    if (!a || !b)
         return 0;
-    }
 
 
     const distance =
-        levenshtein(a, b);
+        levenshtein(a,b);
 
 
     const maxLength =
@@ -1420,13 +1256,10 @@ function similarity(a, b) {
 
 
     return Math.max(
-
         0,
-
         1 -
         distance /
         maxLength
-
     );
 
 }
@@ -1435,6 +1268,7 @@ function similarity(a, b) {
 // =====================================================
 // KEYWORD SCORE
 // =====================================================
+
 
 function keywordScore(text) {
 
@@ -1447,56 +1281,38 @@ function keywordScore(text) {
 
     if (
         t.includes("BETADINE")
-    ) {
-
-        score += 0.30;
-
-    }
+    )
+        score += .30;
 
 
     if (
         t.includes("MOUTHWASH")
-    ) {
-
-        score += 0.25;
-
-    }
+    )
+        score += .25;
 
 
     if (
         t.includes("GARGLE")
-    ) {
-
-        score += 0.25;
-
-    }
+    )
+        score += .25;
 
 
     if (
         t.includes("MW")
-    ) {
-
-        score += 0.10;
-
-    }
+    )
+        score += .10;
 
 
     if (
         t.includes("IODINE")
-    ) {
-
-        score += 0.05;
-
-    }
+    )
+        score += .05;
 
 
     if (
         t.includes("POVIDONE")
-    ) {
-
-        score += 0.05;
-
-    }
+    )
+        score += .05;
 
 
     return Math.min(
@@ -1508,32 +1324,17 @@ function keywordScore(text) {
 
 
 // =====================================================
-// ANALYZE OCR
+// PRODUCT MATCH
 // =====================================================
 
-function analyzeOCR(text) {
+
+function matchProduct(text) {
 
     const normalized =
         normalizeText(text);
 
 
-    const keyword =
-        keywordScore(
-            normalized
-        );
-
-
-    const size100 =
-        extract100ML(
-            normalized
-        );
-
-
-    // ===============================================
-    // FUZZY ALIAS
-    // ===============================================
-
-    let aliasBest = 0;
+    let aliasScore = 0;
 
 
     for (
@@ -1550,10 +1351,10 @@ function analyzeOCR(text) {
 
         if (
             score >
-            aliasBest
+            aliasScore
         ) {
 
-            aliasBest =
+            aliasScore =
                 score;
 
         }
@@ -1561,37 +1362,41 @@ function analyzeOCR(text) {
     }
 
 
-    // ===============================================
-    // COMBINED
-    // ===============================================
-
-    let finalScore =
-        keyword * 0.55 +
-        aliasBest * 0.25;
+    const keyword =
+        keywordScore(
+            normalized
+        );
 
 
-    if (size100) {
+    const sizeOK =
+        has100ML(
+            normalized
+        );
 
-        finalScore += 0.20;
+
+    let score =
+
+        keyword * .55 +
+
+        aliasScore * .25;
+
+
+    if (sizeOK) {
+
+        score += .20;
 
     }
-
-
-    finalScore =
-        Math.min(
-            finalScore,
-            1
-        );
 
 
     return {
 
         score:
-            finalScore,
+            Math.min(
+                score,
+                1
+            ),
 
-        keyword,
-        aliasBest,
-        size100
+        sizeOK
 
     };
 
@@ -1599,46 +1404,436 @@ function analyzeOCR(text) {
 
 
 // =====================================================
-// OCR ONE IMAGE
+// OCR
 // =====================================================
 
-async function runOCR(
-    worker,
-    canvas,
-    psm
-) {
 
-    try {
+async function runOCR() {
 
-        await worker.setParameters({
-
-            tessedit_pageseg_mode:
-                String(psm),
-
-            preserve_interword_spaces:
-                "1"
-
-        });
+    const worker =
+        await Tesseract.createWorker(
+            "eng"
+        );
 
 
-        const result =
-            await worker.recognize(
-                canvas
-            );
+    await worker.setParameters({
+
+        tessedit_pageseg_mode:
+            "11",
+
+        preserve_interword_spaces:
+            "1"
+
+    });
 
 
-        return result.data.text || "";
+    const result =
+        await worker.recognize(
+            lastPhoto
+        );
+
+
+    const text =
+        result.data.text || "";
+
+
+    await worker.terminate();
+
+
+    return text;
+
+}
+
+
+// =====================================================
+// COUNT OBJECTS
+// =====================================================
+
+
+function countBottles(source) {
+
+    if (
+        typeof cv ===
+        "undefined"
+    ) {
+
+        throw new Error(
+            "OpenCV belum siap."
+        );
 
     }
 
-    catch (error) {
 
-        console.error(
-            "OCR error:",
-            error
+    const src =
+        cv.imread(
+            source
         );
 
-        return "";
+
+    const dst =
+        new cv.Mat();
+
+
+    const gray =
+        new cv.Mat();
+
+
+    const blur =
+        new cv.Mat();
+
+
+    const thresh =
+        new cv.Mat();
+
+
+    const contours =
+        new cv.MatVector();
+
+
+    const hierarchy =
+        new cv.Mat();
+
+
+    try {
+
+        // =========================================
+        // GRAYSCALE
+        // =========================================
+
+        cv.cvtColor(
+
+            src,
+
+            gray,
+
+            cv.COLOR_RGBA2GRAY
+
+        );
+
+
+        // =========================================
+        // BLUR
+        // =========================================
+
+        cv.GaussianBlur(
+
+            gray,
+
+            blur,
+
+            new cv.Size(7,7),
+
+            0
+
+        );
+
+
+        // =========================================
+        // EDGE
+        // =========================================
+
+        cv.Canny(
+
+            blur,
+
+            thresh,
+
+            60,
+
+            150
+
+        );
+
+
+        // =========================================
+        // DILATE
+        // =========================================
+
+        const kernel =
+            cv.Mat.ones(
+                5,
+                5,
+                cv.CV_8U
+            );
+
+
+        cv.dilate(
+
+            thresh,
+
+            thresh,
+
+            kernel
+
+        );
+
+
+        kernel.delete();
+
+
+        // =========================================
+        // FIND CONTOURS
+        // =========================================
+
+        cv.findContours(
+
+            thresh,
+
+            contours,
+
+            hierarchy,
+
+            cv.RETR_EXTERNAL,
+
+            cv.CHAIN_APPROX_SIMPLE
+
+        );
+
+
+        let candidates = [];
+
+
+        const imageArea =
+            src.cols *
+            src.rows;
+
+
+        for (
+            let i = 0;
+            i < contours.size();
+            i++
+        ) {
+
+            const contour =
+                contours.get(i);
+
+
+            const rect =
+                cv.boundingRect(
+                    contour
+                );
+
+
+            const area =
+                rect.width *
+                rect.height;
+
+
+            const ratio =
+                rect.height /
+                Math.max(
+                    rect.width,
+                    1
+                );
+
+
+            const areaRatio =
+                area /
+                imageArea;
+
+
+            // =====================================
+            // FILTER
+            // =====================================
+
+            // abaikan benda terlalu kecil
+
+            if (
+                areaRatio < 0.015
+            ) {
+
+                contour.delete();
+
+                continue;
+
+            }
+
+
+            // abaikan benda terlalu besar
+
+            if (
+                areaRatio > 0.60
+            ) {
+
+                contour.delete();
+
+                continue;
+
+            }
+
+
+            // botol umumnya lebih tinggi
+            // daripada lebar
+
+            if (
+                ratio < 1.05
+            ) {
+
+                contour.delete();
+
+                continue;
+
+            }
+
+
+            if (
+                ratio > 6
+            ) {
+
+                contour.delete();
+
+                continue;
+
+            }
+
+
+            candidates.push({
+
+                x:
+                    rect.x,
+
+                y:
+                    rect.y,
+
+                width:
+                    rect.width,
+
+                height:
+                    rect.height,
+
+                area
+
+            });
+
+
+            contour.delete();
+
+        }
+
+
+        // =========================================
+        // REMOVE DUPLICATE / OVERLAP
+        // =========================================
+
+        candidates =
+            removeOverlaps(
+                candidates
+            );
+
+
+        // =========================================
+        // DRAW
+        // =========================================
+
+        const output =
+            document.getElementById(
+                "resultCanvas"
+            );
+
+
+        output.width =
+            source.width;
+
+
+        output.height =
+            source.height;
+
+
+        const ctx =
+            output.getContext(
+                "2d"
+            );
+
+
+        ctx.drawImage(
+            source,
+            0,
+            0
+        );
+
+
+        ctx.lineWidth =
+            Math.max(
+                3,
+                source.width / 400
+            );
+
+
+        ctx.font =
+            Math.max(
+                18,
+                source.width / 35
+            ) +
+            "px Arial";
+
+
+        candidates.forEach(
+
+            (box,index) => {
+
+                ctx.strokeStyle =
+                    "#00ff66";
+
+
+                ctx.strokeRect(
+
+                    box.x,
+
+                    box.y,
+
+                    box.width,
+
+                    box.height
+
+                );
+
+
+                ctx.fillStyle =
+                    "#00ff66";
+
+
+                ctx.fillText(
+
+                    "BOTOL " +
+                    (index + 1),
+
+                    box.x,
+
+                    Math.max(
+                        25,
+                        box.y - 8
+                    )
+
+                );
+
+            }
+
+        );
+
+
+        output.style.display =
+            "block";
+
+
+        return candidates.length;
+
+    }
+
+    finally {
+
+        src.delete();
+
+        dst.delete();
+
+        gray.delete();
+
+        blur.delete();
+
+        thresh.delete();
+
+        contours.delete();
+
+        hierarchy.delete();
 
     }
 
@@ -1646,30 +1841,211 @@ async function runOCR(
 
 
 // =====================================================
-// ANALYZE PHOTO
+// REMOVE OVERLAPS
 // =====================================================
 
-async function analyzePhoto() {
+
+function removeOverlaps(
+    boxes
+) {
+
+    const result = [];
+
+
+    // terbesar dahulu
+
+    boxes.sort(
+        (a,b) =>
+            b.area - a.area
+    );
+
+
+    for (
+        const box
+        of boxes
+    ) {
+
+        let overlap =
+            false;
+
+
+        for (
+            const existing
+            of result
+        ) {
+
+            const x1 =
+                Math.max(
+                    box.x,
+                    existing.x
+                );
+
+
+            const y1 =
+                Math.max(
+                    box.y,
+                    existing.y
+                );
+
+
+            const x2 =
+                Math.min(
+
+                    box.x +
+                    box.width,
+
+                    existing.x +
+                    existing.width
+
+                );
+
+
+            const y2 =
+                Math.min(
+
+                    box.y +
+                    box.height,
+
+                    existing.y +
+                    existing.height
+
+                );
+
+
+            const intersectionWidth =
+                Math.max(
+                    0,
+                    x2 - x1
+                );
+
+
+            const intersectionHeight =
+                Math.max(
+                    0,
+                    y2 - y1
+                );
+
+
+            const intersection =
+                intersectionWidth *
+                intersectionHeight;
+
+
+            const smaller =
+                Math.min(
+                    box.area,
+                    existing.area
+                );
+
+
+            if (
+                smaller > 0 &&
+                intersection /
+                smaller >
+                0.45
+            ) {
+
+                overlap =
+                    true;
+
+                break;
+
+            }
+
+        }
+
+
+        if (!overlap) {
+
+            result.push(
+                box
+            );
+
+        }
+
+    }
+
+
+    return result;
+
+}
+
+
+// =====================================================
+// WAIT OPENCV
+// =====================================================
+
+
+function waitForOpenCV() {
+
+    return new Promise(
+
+        resolve => {
+
+            const check =
+                () => {
+
+                    if (
+                        typeof cv !==
+                        "undefined" &&
+                        cv.Mat
+                    ) {
+
+                        resolve();
+
+                    }
+
+                    else {
+
+                        setTimeout(
+                            check,
+                            200
+                        );
+
+                    }
+
+                };
+
+
+            check();
+
+        }
+
+    );
+
+}
+
+
+// =====================================================
+// MAIN
+// =====================================================
+
+
+async function analyzeProductAndCount() {
 
     const productEl =
         document.getElementById(
             "product"
         );
 
+
     const codeEl =
         document.getElementById(
             "code"
         );
+
 
     const sizeEl =
         document.getElementById(
             "size"
         );
 
+
     const confidenceEl =
         document.getElementById(
             "confidence"
         );
+
 
     const ocrEl =
         document.getElementById(
@@ -1677,192 +2053,94 @@ async function analyzePhoto() {
         );
 
 
+    const countEl =
+        document.getElementById(
+            "count"
+        );
+
+
+    const countStatusEl =
+        document.getElementById(
+            "countStatus"
+        );
+
+
+    // RESET
+
     productEl.innerText =
-        "Menganalisis foto...";
+        "Menganalisis...";
+
 
     codeEl.innerText =
         "-";
 
+
     sizeEl.innerText =
         "-";
+
 
     confidenceEl.innerText =
         "-";
 
 
+    countEl.innerText =
+        "-";
+
+
+    countStatusEl.innerText =
+        "Menunggu...";
+
+
+    resultCanvas.style.display =
+        "none";
+
+
     try {
 
-        setProgress(10);
+        // =========================================
+        // OCR
+        // =========================================
+
+        setProgress(15);
 
         setStatus(
-            "🧪 Membuat beberapa versi foto..."
+            "🔤 Membaca produk dengan OCR..."
         );
 
 
-        const variants =
-            createVariants(
-                lastPhoto
-            );
-
-
-        setProgress(20);
-
-        setStatus(
-            "🤖 Memuat mesin OCR..."
-        );
-
-
-        const worker =
-            await Tesseract.createWorker(
-                "eng"
-            );
-
-
-        let allTexts = [];
-
-
-        // ==========================================
-        // OCR 6 VARIAN × 2 MODE
-        // ==========================================
-
-        const total =
-            variants.length * 2;
-
-
-        let done = 0;
-
-
-        for (
-            const variant
-            of variants
-        ) {
-
-            for (
-                const psm
-                of [6, 11]
-            ) {
-
-                done++;
-
-
-                setStatus(
-
-                    "🔍 Membaca: " +
-                    variant.name +
-                    " / OCR mode " +
-                    psm
-
-                );
-
-
-                const text =
-                    await runOCR(
-
-                        worker,
-
-                        variant.canvas,
-
-                        psm
-
-                    );
-
-
-                if (
-                    text &&
-                    text.trim()
-                ) {
-
-                    allTexts.push({
-
-                        variant:
-                            variant.name,
-
-                        psm,
-
-                        text
-
-                    });
-
-                }
-
-
-                setProgress(
-
-                    20 +
-                    Math.round(
-                        done /
-                        total *
-                        65
-                    )
-
-                );
-
-            }
-
-        }
-
-
-        await worker.terminate();
-
-
-        setProgress(88);
-
-        setStatus(
-            "🧠 Menggabungkan hasil OCR..."
-        );
-
-
-        // ==========================================
-        // GABUNGAN OCR
-        // ==========================================
-
-        const combined =
-            allTexts
-            .map(
-                item =>
-                    item.text
-            )
-            .join("\n");
+        const ocrText =
+            await runOCR();
 
 
         ocrEl.innerText =
-            combined ||
-            "Tidak ada teks yang terbaca.";
+            ocrText ||
+            "Tidak ada teks terbaca.";
 
 
-        console.log(
-            "OCR DETAIL:",
-            allTexts
-        );
-
-
-        // ==========================================
-        // ANALISIS
-        // ==========================================
-
-        const result =
-            analyzeOCR(
-                combined
+        const match =
+            matchProduct(
+                ocrText
             );
 
 
         const percent =
             Math.round(
-                result.score * 100
+                match.score * 100
             );
 
 
-        // ==========================================
-        // HASIL KUAT
-        // ==========================================
+        // =========================================
+        // PRODUCT RESULT
+        // =========================================
 
         if (
-            result.score >= 0.55 &&
-            result.size100
+            match.score >= 0.55 &&
+            match.sizeOK
         ) {
 
             productEl.innerText =
                 PRODUCT.name;
+
 
             productEl.className =
                 "value success";
@@ -1872,16 +2150,8 @@ async function analyzePhoto() {
                 PRODUCT.code;
 
 
-            codeEl.className =
-                "value success";
-
-
             sizeEl.innerText =
                 "100 ML";
-
-
-            sizeEl.className =
-                "value success";
 
 
             confidenceEl.innerText =
@@ -1891,23 +2161,10 @@ async function analyzePhoto() {
             confidenceEl.className =
                 "value success";
 
-
-            setProgress(100);
-
-
-            setStatus(
-                "✅ P0008 BERHASIL DIIDENTIFIKASI"
-            );
-
         }
 
-
-        // ==========================================
-        // KANDIDAT
-        // ==========================================
-
         else if (
-            result.score >= 0.30
+            match.score >= 0.30
         ) {
 
             productEl.innerText =
@@ -1923,9 +2180,9 @@ async function analyzePhoto() {
 
 
             sizeEl.innerText =
-                result.size100
+                match.sizeOK
                 ? "100 ML"
-                : "100 ML belum terbaca";
+                : "Belum terbaca";
 
 
             confidenceEl.innerText =
@@ -1936,20 +2193,7 @@ async function analyzePhoto() {
             confidenceEl.className =
                 "value warning";
 
-
-            setProgress(100);
-
-
-            setStatus(
-                "⚠️ Kandidat ditemukan — perlu verifikasi"
-            );
-
         }
-
-
-        // ==========================================
-        // GAGAL
-        // ==========================================
 
         else {
 
@@ -1966,27 +2210,136 @@ async function analyzePhoto() {
 
 
             sizeEl.innerText =
-                result.size100
-                ? "100 ML"
-                : "Tidak terbaca";
+                "-";
 
 
             confidenceEl.innerText =
                 percent + "%";
 
 
-            confidenceEl.className =
-                "value danger";
+            countEl.innerText =
+                "-";
+
+
+            countStatusEl.innerText =
+                "Counting tidak dijalankan";
 
 
             setProgress(100);
 
 
             setStatus(
-                "❌ OCR belum cukup jelas"
+                "❌ Produk belum cukup jelas"
             );
 
+
+            return;
+
         }
+
+
+        // =========================================
+        // OBJECT COUNTING
+        // =========================================
+
+        setProgress(55);
+
+        setStatus(
+            "📦 Menyiapkan object counting..."
+        );
+
+
+        await waitForOpenCV();
+
+
+        setProgress(65);
+
+        setStatus(
+            "🔎 Mendeteksi bentuk botol..."
+        );
+
+
+        const count =
+            countBottles(
+                lastPhoto
+            );
+
+
+        // =========================================
+        // RESULT
+        // =========================================
+
+        countEl.innerText =
+            count;
+
+
+        if (
+            count === 1
+        ) {
+
+            countStatusEl.innerText =
+                "✅ 1 botol terdeteksi";
+
+            countStatusEl.className =
+                "value success";
+
+        }
+
+        else if (
+            count === 2
+        ) {
+
+            countStatusEl.innerText =
+                "✅ 2 botol terdeteksi";
+
+            countStatusEl.className =
+                "value success";
+
+        }
+
+        else if (
+            count === 3
+        ) {
+
+            countStatusEl.innerText =
+                "✅ 3 botol terdeteksi";
+
+            countStatusEl.className =
+                "value success";
+
+        }
+
+        else if (
+            count > 3
+        ) {
+
+            countStatusEl.innerText =
+                "⚠️ " +
+                count +
+                " objek terdeteksi — perlu verifikasi";
+
+            countStatusEl.className =
+                "value warning";
+
+        }
+
+        else {
+
+            countStatusEl.innerText =
+                "❌ Botol belum terdeteksi";
+
+            countStatusEl.className =
+                "value danger";
+
+        }
+
+
+        setProgress(100);
+
+
+        setStatus(
+            "✅ Analisis selesai"
+        );
 
     }
 
@@ -2004,13 +2357,12 @@ async function analyzePhoto() {
         );
 
 
-        productEl.innerText =
-            "Error";
+        countEl.innerText =
+            "-";
 
 
-        ocrEl.innerText =
-            error.stack ||
-            error.message;
+        countStatusEl.innerText =
+            "Gagal menghitung";
 
     }
 
@@ -2021,15 +2373,8 @@ async function analyzePhoto() {
 // RESET
 // =====================================================
 
+
 function resetScan() {
-
-    photoPreview.style.display =
-        "none";
-
-
-    photoPreview.src =
-        "";
-
 
     document.getElementById(
         "product"
@@ -2062,9 +2407,31 @@ function resetScan() {
 
 
     document.getElementById(
+        "count"
+    ).innerText =
+        "-";
+
+
+    document.getElementById(
+        "countStatus"
+    ).innerText =
+        "Belum dihitung";
+
+
+    document.getElementById(
+        "countStatus"
+    ).className =
+        "value";
+
+
+    document.getElementById(
         "ocrText"
     ).innerText =
         "Belum ada hasil OCR.";
+
+
+    resultCanvas.style.display =
+        "none";
 
 
     setProgress(0);
@@ -2073,7 +2440,7 @@ function resetScan() {
     if (stream) {
 
         setStatus(
-            "Kamera aktif — siap mengambil foto"
+            "Kamera aktif — siap foto"
         );
 
     }
@@ -2090,8 +2457,9 @@ function resetScan() {
 
 
 // =====================================================
-// STOP CAMERA WHEN PAGE CLOSES
+// STOP CAMERA
 // =====================================================
+
 
 window.addEventListener(
     "beforeunload",
