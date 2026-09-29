@@ -1,961 +1,758 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0">
-
-<title>
-Scan P0008 V5 - Counting Botol
-</title>
+<title>Scan Sample V6 - Counting</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
 <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 
-
 <style>
-
-* {
-    box-sizing: border-box;
+*{
+    box-sizing:border-box;
 }
 
-body {
-
-    margin: 0;
-
-    padding: 15px;
-
-    font-family: Arial, sans-serif;
-
-    background: #f2f4f7;
-
-    color: #222;
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f4f7fb;
+    color:#1f2937;
 }
 
-
-.container {
-
-    max-width: 750px;
-
-    margin: auto;
+.header{
+    background:#0756a3;
+    color:white;
+    padding:18px 20px;
+    text-align:center;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
 }
 
-
-h1 {
-
-    text-align: center;
-
-    margin: 5px 0;
-
+.header h1{
+    margin:0;
+    font-size:22px;
 }
 
-
-.subtitle {
-
-    text-align: center;
-
-    color: #666;
-
-    margin-bottom: 15px;
-
+.header p{
+    margin:6px 0 0;
+    font-size:13px;
+    opacity:.9;
 }
 
-
-.card {
-
-    background: white;
-
-    border-radius: 15px;
-
-    padding: 15px;
-
-    margin-bottom: 15px;
-
-    box-shadow:
-        0 2px 10px
-        rgba(0,0,0,.08);
-
+.container{
+    max-width:1000px;
+    margin:auto;
+    padding:15px;
 }
 
-
-.camera-box {
-
-    position: relative;
-
-    width: 100%;
-
-    background: #000;
-
-    border-radius: 14px;
-
-    overflow: hidden;
-
+.card{
+    background:white;
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:15px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
 }
 
-
-video {
-
-    display: block;
-
-    width: 100%;
-
-    max-height: 70vh;
-
-    object-fit: contain;
-
+.section-title{
+    font-weight:bold;
+    font-size:16px;
+    margin-bottom:12px;
 }
 
-
-canvas {
-
-    max-width: 100%;
-
-    border-radius: 10px;
-
+video,
+canvas.preview{
+    width:100%;
+    max-height:550px;
+    object-fit:contain;
+    background:#111;
+    border-radius:12px;
 }
 
-
-#photoCanvas,
-#workCanvas {
-
-    display: none;
-
+.camera-wrapper{
+    position:relative;
 }
 
-
-#resultCanvas {
-
-    width: 100%;
-
-    display: none;
-
-    background: #111;
-
+.camera-guide{
+    position:absolute;
+    left:8%;
+    right:8%;
+    top:15%;
+    bottom:15%;
+    border:2px dashed #00ff66;
+    border-radius:12px;
+    pointer-events:none;
 }
 
-
-.camera-guide {
-
-    position: absolute;
-
-    left: 8%;
-
-    right: 8%;
-
-    top: 15%;
-
-    bottom: 15%;
-
-    border:
-
-        2px solid
-        rgba(255,255,255,.8);
-
-    border-radius: 15px;
-
-    pointer-events: none;
-
+.camera-guide span{
+    position:absolute;
+    top:-28px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,.65);
+    color:white;
+    padding:5px 10px;
+    border-radius:5px;
+    font-size:12px;
+    white-space:nowrap;
 }
 
-
-.guide-text {
-
-    position: absolute;
-
-    top: 8px;
-
-    left: 0;
-
-    right: 0;
-
-    text-align: center;
-
-    color: white;
-
-    font-size: 13px;
-
-    text-shadow:
-
-        0 1px 4px
-        black;
-
+.buttons{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:12px;
 }
 
-
-button {
-
-    width: 100%;
-
-    padding: 14px;
-
-    margin-top: 10px;
-
-    border: none;
-
-    border-radius: 11px;
-
-    font-size: 16px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
+button,
+.file-label{
+    border:0;
+    border-radius:9px;
+    padding:11px 15px;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:14px;
 }
 
-
-button:disabled {
-
-    opacity: .5;
-
+.btn-primary{
+    background:#0756a3;
+    color:white;
 }
 
-
-.btn-blue {
-
-    background: #1769aa;
-
-    color: white;
-
+.btn-success{
+    background:#16803c;
+    color:white;
 }
 
-
-.btn-green {
-
-    background: #16803c;
-
-    color: white;
-
+.btn-warning{
+    background:#e99b00;
+    color:white;
 }
 
-
-.btn-orange {
-
-    background: #d97706;
-
-    color: white;
-
+.btn-danger{
+    background:#d93636;
+    color:white;
 }
 
-
-.btn-gray {
-
-    background: #e7ebef;
-
-    color: #222;
-
+.btn-secondary{
+    background:#e5e7eb;
+    color:#111827;
 }
 
-
-.label {
-
-    margin-top: 10px;
-
-    color: #777;
-
-    font-size: 13px;
-
+.file-label{
+    display:inline-block;
+    background:#5b35b5;
+    color:white;
 }
 
-
-.value {
-
-    margin-top: 4px;
-
-    font-size: 19px;
-
-    font-weight: bold;
-
+input[type=file]{
+    display:none;
 }
 
-
-.success {
-
-    color: #16803c;
-
+.status{
+    padding:12px;
+    background:#eef5ff;
+    border-left:4px solid #0756a3;
+    border-radius:6px;
+    font-size:13px;
 }
 
-
-.warning {
-
-    color: #b26a00;
-
+.progress{
+    width:100%;
+    height:9px;
+    background:#e5e7eb;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:8px;
 }
 
-
-.danger {
-
-    color: #c62828;
-
+.progress-bar{
+    width:0%;
+    height:100%;
+    background:#0756a3;
+    transition:.3s;
 }
 
-
-.big-number {
-
-    text-align: center;
-
-    font-size: 55px;
-
-    font-weight: bold;
-
-    margin: 10px 0;
-
+.result-main{
+    text-align:center;
+    padding:20px;
+    background:#eef8f1;
+    border-radius:12px;
+    border:1px solid #b7dfc1;
 }
 
-
-.progress {
-
-    width: 100%;
-
-    height: 10px;
-
-    margin-top: 10px;
-
-    background: #ddd;
-
-    border-radius: 20px;
-
-    overflow: hidden;
-
+.product-name{
+    font-size:20px;
+    font-weight:bold;
+    color:#0756a3;
 }
 
-
-.progress-bar {
-
-    height: 100%;
-
-    width: 0%;
-
-    background: #1769aa;
-
-    transition: width .2s;
-
+.product-size{
+    font-size:15px;
+    margin-top:5px;
 }
 
-
-.photo-preview {
-
-    width: 100%;
-
-    border-radius: 12px;
-
-    margin-top: 12px;
-
-    display: none;
-
+.count-number{
+    font-size:54px;
+    font-weight:bold;
+    color:#16803c;
+    margin:10px 0 0;
 }
 
-
-pre {
-
-    background: #111;
-
-    color: #00ff88;
-
-    padding: 12px;
-
-    border-radius: 10px;
-
-    white-space: pre-wrap;
-
-    word-break: break-word;
-
-    max-height: 300px;
-
-    overflow: auto;
-
-    font-size: 12px;
-
+.count-label{
+    font-size:13px;
+    color:#4b5563;
 }
 
-
-.small {
-
-    color: #666;
-
-    font-size: 12px;
-
-    line-height: 1.5;
-
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:12px;
 }
 
-
-.info-box {
-
-    background: #eef6ff;
-
-    border-radius: 10px;
-
-    padding: 10px;
-
-    font-size: 13px;
-
-    line-height: 1.5;
-
+th,
+td{
+    border:1px solid #d9dee7;
+    padding:9px;
+    text-align:left;
+    font-size:13px;
 }
 
+th{
+    background:#0756a3;
+    color:white;
+}
+
+.badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:20px;
+    background:#dff4e5;
+    color:#167338;
+    font-weight:bold;
+    font-size:12px;
+}
+
+.warning-box{
+    background:#fff7df;
+    border:1px solid #f1d486;
+    padding:10px;
+    border-radius:8px;
+    font-size:12px;
+    margin-top:10px;
+}
+
+.debug{
+    white-space:pre-wrap;
+    background:#111827;
+    color:#d1d5db;
+    padding:12px;
+    border-radius:8px;
+    font-size:11px;
+    max-height:250px;
+    overflow:auto;
+}
+
+.hidden{
+    display:none!important;
+}
+
+#countCanvas{
+    width:100%;
+    border-radius:12px;
+    background:#111;
+}
+
+.small{
+    font-size:12px;
+    color:#6b7280;
+}
+
+@media(max-width:600px){
+
+    .header h1{
+        font-size:19px;
+    }
+
+    button,
+    .file-label{
+        flex:1;
+        text-align:center;
+    }
+
+    .count-number{
+        font-size:45px;
+    }
+}
 </style>
-
 </head>
-
 
 <body>
 
+<div class="header">
+    <h1>📦 Scan Sample V6</h1>
+    <p>Identifikasi Produk + Counting Jumlah Sampel</p>
+</div>
 
 <div class="container">
 
+    <!-- CAMERA -->
+    <div class="card">
 
-<h1>
-📷 Scan Produk V5
-</h1>
+        <div class="section-title">
+            📷 Ambil Foto Sampel
+        </div>
 
+        <div class="camera-wrapper">
 
-<div class="subtitle">
+            <video id="video" autoplay playsinline></video>
 
-P0008 — BETADINE MOUTHWASH AND GARGLE 100 ML
+            <div class="camera-guide">
+                <span>Posisikan semua sampel di dalam area</span>
+            </div>
 
-</div>
+        </div>
 
+        <div class="buttons">
 
-<!-- ================================================= -->
-<!-- CAMERA -->
-<!-- ================================================= -->
+            <button
+                class="btn-primary"
+                onclick="startCamera()">
+                📷 Buka Kamera
+            </button>
 
+            <button
+                class="btn-success"
+                onclick="takePhoto()">
+                📸 Ambil Foto
+            </button>
 
-<div class="card">
+            <button
+                class="btn-secondary"
+                onclick="switchCamera()">
+                🔄 Ganti Kamera
+            </button>
 
+            <label class="file-label">
+                🖼️ Upload Foto
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept="image/*"
+                    onchange="uploadPhoto(event)">
+            </label>
 
-<div class="camera-box">
+        </div>
 
+        <div class="buttons">
 
-<video
-    id="video"
-    autoplay
-    playsinline>
-</video>
+            <button
+                class="btn-warning"
+                onclick="analyzeImage()">
+                🔍 ANALISIS & HITUNG
+            </button>
 
+            <button
+                class="btn-danger"
+                onclick="resetAll()">
+                ↻ Reset
+            </button>
 
-<div class="camera-guide"></div>
+        </div>
 
+    </div>
 
-<div class="guide-text">
 
-Posisikan semua botol terlihat jelas
+    <!-- PREVIEW -->
+    <div class="card hidden" id="previewCard">
 
-</div>
+        <div class="section-title">
+            🖼️ Foto Sampel
+        </div>
 
+        <canvas
+            id="photoCanvas"
+            class="preview">
+        </canvas>
 
-</div>
+        <div class="small">
+            Pastikan semua sampel terlihat jelas dan tidak terlalu bertumpuk.
+        </div>
 
+    </div>
 
-<canvas id="photoCanvas"></canvas>
 
-<canvas id="workCanvas"></canvas>
+    <!-- STATUS -->
+    <div class="card">
 
+        <div class="section-title">
+            ⚙️ Status Analisis
+        </div>
 
-<button
-    class="btn-blue"
-    id="btnCamera"
-    onclick="startCamera()">
+        <div
+            id="status"
+            class="status">
+            Siap. Ambil foto atau upload foto.
+        </div>
 
-📷 BUKA KAMERA
+        <div class="progress">
+            <div
+                id="progressBar"
+                class="progress-bar">
+            </div>
+        </div>
 
-</button>
+    </div>
 
 
-<button
-    class="btn-green"
-    id="btnPhoto"
-    onclick="takePhoto()"
-    disabled>
+    <!-- RESULT -->
+    <div
+        class="card hidden"
+        id="resultCard">
 
-📸 FOTO & HITUNG BOTOL
+        <div class="section-title">
+            ✅ Hasil Scan
+        </div>
 
-</button>
+        <div class="result-main">
 
+            <div
+                id="resultProduct"
+                class="product-name">
+                -
+            </div>
 
-<button
-    class="btn-gray"
-    onclick="switchCamera()">
+            <div
+                id="resultSize"
+                class="product-size">
+                -
+            </div>
 
-🔄 GANTI KAMERA
+            <div
+                id="resultCode"
+                class="small">
+                -
+            </div>
 
-</button>
+            <div
+                id="resultCount"
+                class="count-number">
+                0
+            </div>
 
+            <div class="count-label">
+                PCS TERDETEKSI
+            </div>
 
-<button
-    class="btn-gray"
-    onclick="resetScan()">
+        </div>
 
-♻️ ULANGI
+        <table>
 
-</button>
+            <thead>
+                <tr>
+                    <th>Produk</th>
+                    <th>Ukuran</th>
+                    <th>Kode</th>
+                    <th>Jumlah</th>
+                </tr>
+            </thead>
 
+            <tbody id="resultTable">
+            </tbody>
 
-</div>
+        </table>
 
+    </div>
 
-<!-- ================================================= -->
-<!-- STATUS -->
-<!-- ================================================= -->
 
+    <!-- COUNTING IMAGE -->
+    <div
+        class="card hidden"
+        id="countCard">
 
-<div class="card">
+        <div class="section-title">
+            🎯 Hasil Counting
+        </div>
 
+        <div class="small">
+            Kotak hijau menunjukkan objek sampel yang berhasil terdeteksi.
+        </div>
 
-<div class="label">
+        <br>
 
-Status
+        <canvas id="countCanvas"></canvas>
 
-</div>
+        <div
+            id="countInfo"
+            class="warning-box">
+        </div>
 
+    </div>
 
-<div
-    id="status"
-    class="value">
 
-Kamera belum aktif
+    <!-- OCR -->
+    <div
+        class="card hidden"
+        id="ocrCard">
 
-</div>
+        <div class="section-title">
+            🔤 Hasil OCR
+        </div>
 
+        <div
+            id="ocrText"
+            class="debug">
+        </div>
 
-<div class="progress">
-
-<div
-    id="progressBar"
-    class="progress-bar">
-</div>
-
-</div>
-
-
-</div>
-
-
-<!-- ================================================= -->
-<!-- PRODUCT -->
-<!-- ================================================= -->
-
-
-<div class="card">
-
-
-<div class="label">
-
-Produk
-
-</div>
-
-
-<div
-    id="product"
-    class="value">
-
-Belum dianalisis
-
-</div>
-
-
-<div class="label">
-
-Kode Produk
-
-</div>
-
-
-<div
-    id="code"
-    class="value">
-
--
-
-</div>
-
-
-<div class="label">
-
-Ukuran
-
-</div>
-
-
-<div
-    id="size"
-    class="value">
-
--
-
-</div>
-
-
-<div class="label">
-
-OCR Confidence
-
-</div>
-
-
-<div
-    id="confidence"
-    class="value">
-
--
-
-</div>
-
-
-</div>
-
-
-<!-- ================================================= -->
-<!-- COUNT -->
-<!-- ================================================= -->
-
-
-<div class="card">
-
-
-<div class="label">
-
-📦 JUMLAH BOTOL TERDETEKSI
-
-</div>
-
-
-<div
-    id="count"
-    class="big-number">
-
--
-
-</div>
-
-
-<div
-    id="countStatus"
-    class="value">
-
-Belum dihitung
-
-</div>
-
-
-</div>
-
-
-<!-- ================================================= -->
-<!-- DETECTION IMAGE -->
-<!-- ================================================= -->
-
-
-<div class="card">
-
-
-<div class="label">
-
-🔎 Hasil Deteksi Objek
+    </div>
 
 </div>
 
 
 <canvas
-    id="resultCanvas">
+    id="workCanvas"
+    class="hidden">
 </canvas>
-
-
-<div class="small">
-
-Kotak pada gambar menunjukkan objek
-yang dianggap sebagai botol.
-
-</div>
-
-
-</div>
-
-
-<!-- ================================================= -->
-<!-- OCR -->
-<!-- ================================================= -->
-
-
-<div class="card">
-
-
-<div class="label">
-
-🔤 Hasil OCR
-
-</div>
-
-
-<pre id="ocrText">
-
-Belum ada hasil OCR.
-
-</pre>
-
-
-</div>
-
-
-<!-- ================================================= -->
-<!-- INFO -->
-<!-- ================================================= -->
-
-
-<div class="card">
-
-
-<div class="info-box">
-
-<b>Catatan V5</b>
-
-<br><br>
-
-Versi ini menggunakan analisis gambar
-berbasis kontur sebagai prototype
-penghitungan botol.
-
-<br><br>
-
-Untuk penggunaan produksi,
-bagian counting nantinya sebaiknya
-diganti dengan model Object Detection
-yang dilatih khusus untuk kemasan produk.
-
-</div>
-
-
-</div>
-
-
-</div>
 
 
 <script>
 
+/* =========================================================
+   MASTER PRODUK
+   ========================================================= */
 
-// =====================================================
-// MASTER
-// =====================================================
+const PRODUCTS = [
+
+    {
+        code:"P0001",
+        name:"BETADINE SOLUTION",
+        size:"5 ML",
+        aliases:[
+            "BETADINE SOLUTION 5 ML",
+            "BETADINE 5 ML",
+            "BETADINE SOLUTION"
+        ]
+    },
+
+    {
+        code:"P0002",
+        name:"BETADINE SOLUTION",
+        size:"15 ML",
+        aliases:[
+            "BETADINE SOLUTION 15 ML",
+            "BETADINE 15 ML",
+            "BETADINE SOLUTION"
+        ]
+    },
+
+    {
+        code:"P0003",
+        name:"BETADINE SOLUTION",
+        size:"30 ML",
+        aliases:[
+            "BETADINE SOLUTION 30 ML",
+            "BETADINE 30 ML",
+            "BETADINE SOLUTION"
+        ]
+    },
+
+    {
+        code:"P0004",
+        name:"BETADINE SOLUTION",
+        size:"60 ML",
+        aliases:[
+            "BETADINE SOLUTION 60 ML",
+            "BETADINE 60 ML",
+            "BETADINE SOLUTION"
+        ]
+    },
+
+    {
+        code:"P0005",
+        name:"BETADINE SOLUTION",
+        size:"1 L",
+        aliases:[
+            "BETADINE SOLUTION 1 L",
+            "BETADINE SOLUTION 1000 ML",
+            "BETADINE 1 L",
+            "BETADINE SOLUTION"
+        ]
+    },
+
+    {
+        code:"P0006",
+        name:"BETADINE OINTMENT",
+        size:"5 G",
+        aliases:[
+            "BETADINE OINTMENT 5 G",
+            "BETADINE OINTMENT",
+            "BETADINE 5 G"
+        ]
+    },
+
+    {
+        code:"P0007",
+        name:"BETADINE OINTMENT",
+        size:"10 G",
+        aliases:[
+            "BETADINE OINTMENT 10 G",
+            "BETADINE OINTMENT",
+            "BETADINE 10 G"
+        ]
+    },
+
+    {
+        code:"P0008",
+        name:"BETADINE MOUTHWASH AND GARGLE",
+        size:"100 ML",
+        aliases:[
+            "BETADINE MOUTHWASH AND GARGLE 100 ML",
+            "BETADINE MOUTHWASH GARGLE 100 ML",
+            "BETADINE MOUTHWASH",
+            "BETADINE GARGLE",
+            "BETADINE MW GARGLE",
+            "BETADINE MW & GARGLE",
+            "MOUTHWASH AND GARGLE",
+            "MOUTHWASH GARGLE",
+            "BETADINE 100 ML"
+        ]
+    }
+
+];
 
 
-const PRODUCT = {
-
-    code: "P0008",
-
-    name:
-        "BETADINE MOUTHWASH AND GARGLE 100 ML",
-
-    size:
-        "100 ML",
-
-    aliases: [
-
-        "BETADINE",
-
-        "BETADINE MOUTHWASH",
-
-        "BETADINE GARGLE",
-
-        "BETADINE MOUTHWASH GARGLE",
-
-        "BETADINE MOUTHWASH AND GARGLE",
-
-        "BETADINE MOUTHWASH & GARGLE",
-
-        "BETADINE MW GARGLE",
-
-        "BETADINE MW & GARGLE",
-
-        "MOUTHWASH AND GARGLE",
-
-        "MOUTHWASH GARGLE"
-
-    ]
-
-};
-
-
-// =====================================================
-// STATE
-// =====================================================
-
+/* =========================================================
+   GLOBAL
+   ========================================================= */
 
 let stream = null;
 
-let facingMode =
-    "environment";
+let facingMode = "environment";
 
-let lastPhoto = null;
+let currentImage = null;
+
+let worker = null;
+
+let cvReady = false;
 
 
-// =====================================================
-// ELEMENTS
-// =====================================================
-
+/* =========================================================
+   ELEMENT
+   ========================================================= */
 
 const video =
-    document.getElementById(
-        "video"
-    );
-
+    document.getElementById("video");
 
 const photoCanvas =
-    document.getElementById(
-        "photoCanvas"
-    );
+    document.getElementById("photoCanvas");
+
+const countCanvas =
+    document.getElementById("countCanvas");
+
+const workCanvas =
+    document.getElementById("workCanvas");
+
+const statusEl =
+    document.getElementById("status");
+
+const progressBar =
+    document.getElementById("progressBar");
+
+const previewCard =
+    document.getElementById("previewCard");
+
+const resultCard =
+    document.getElementById("resultCard");
+
+const countCard =
+    document.getElementById("countCard");
+
+const ocrCard =
+    document.getElementById("ocrCard");
 
 
-const resultCanvas =
-    document.getElementById(
-        "resultCanvas"
-    );
+/* =========================================================
+   OPENCV READY
+   ========================================================= */
+
+function waitForOpenCV(){
+
+    if(typeof cv !== "undefined"){
+
+        cvReady = true;
+
+        console.log("OpenCV ready");
+
+    }else{
+
+        setTimeout(waitForOpenCV,500);
+
+    }
+
+}
+
+waitForOpenCV();
 
 
-const photoPreview =
-    document.getElementById(
-        "photoPreview"
-    );
+/* =========================================================
+   STATUS
+   ========================================================= */
 
+function setStatus(text){
 
-const btnPhoto =
-    document.getElementById(
-        "btnPhoto"
-    );
+    statusEl.innerHTML = text;
 
+}
 
-// =====================================================
-// STATUS
-// =====================================================
+function setProgress(value){
 
-
-function setStatus(text) {
-
-    document.getElementById(
-        "status"
-    ).innerText = text;
+    progressBar.style.width =
+        Math.max(0,Math.min(100,value)) + "%";
 
 }
 
 
-function setProgress(value) {
+/* =========================================================
+   CAMERA
+   ========================================================= */
 
-    document.getElementById(
-        "progressBar"
-    ).style.width =
-        value + "%";
+async function startCamera(){
 
-}
+    try{
 
+        if(stream){
 
-// =====================================================
-// START CAMERA
-// =====================================================
-
-
-async function startCamera() {
-
-    try {
-
-        setStatus(
-            "Membuka kamera..."
-        );
-
-        setProgress(5);
-
-
-        if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia
-        ) {
-
-            throw new Error(
-                "Browser tidak mendukung kamera."
+            stream.getTracks().forEach(
+                track => track.stop()
             );
 
         }
 
-
-        if (stream) {
-
-            stream
-                .getTracks()
-                .forEach(
-                    track =>
-                        track.stop()
-                );
-
-        }
-
-
         stream =
-            await navigator.mediaDevices
-            .getUserMedia({
+            await navigator.mediaDevices.getUserMedia({
 
-                video: {
-
-                    facingMode: {
-
-                        ideal:
-                            facingMode
-
-                    },
-
-                    width: {
-
-                        ideal: 1920
-
-                    },
-
-                    height: {
-
-                        ideal: 1080
-
-                    }
-
+                video:{
+                    facingMode:facingMode,
+                    width:{ideal:1920},
+                    height:{ideal:1080}
                 },
 
-                audio: false
+                audio:false
 
             });
 
-
-        video.srcObject =
-            stream;
-
-
-        await video.play();
-
-
-        btnPhoto.disabled =
-            false;
-
-
-        setProgress(100);
-
+        video.srcObject = stream;
 
         setStatus(
-            "✅ Kamera aktif — siap foto"
+            "📷 Kamera aktif. Susun semua sampel di dalam kotak hijau."
         );
 
-    }
-
-    catch (error) {
+    }catch(error){
 
         console.error(error);
 
-        setProgress(0);
-
         setStatus(
-            "❌ Kamera gagal: " +
-            error.name +
-            " — " +
-            error.message
+            "❌ Kamera tidak dapat dibuka. Gunakan Upload Foto."
         );
 
     }
@@ -963,499 +760,669 @@ async function startCamera() {
 }
 
 
-// =====================================================
-// SWITCH CAMERA
-// =====================================================
-
-
-async function switchCamera() {
+async function switchCamera(){
 
     facingMode =
-        facingMode ===
-        "environment"
-
+        facingMode === "environment"
         ? "user"
-
         : "environment";
-
 
     await startCamera();
 
 }
 
 
-// =====================================================
-// TAKE PHOTO
-// =====================================================
+/* =========================================================
+   TAKE PHOTO
+   ========================================================= */
 
+function takePhoto(){
 
-function takePhoto() {
+    if(!video.srcObject){
 
-    if (
-        !video.videoWidth
-    ) {
-
-        alert(
-            "Kamera belum siap."
+        setStatus(
+            "⚠️ Buka kamera terlebih dahulu."
         );
 
         return;
 
     }
 
-
     const width =
         video.videoWidth;
-
 
     const height =
         video.videoHeight;
 
+    if(!width || !height){
 
-    photoCanvas.width =
-        width;
+        setStatus(
+            "⚠️ Kamera belum siap."
+        );
 
+        return;
 
-    photoCanvas.height =
-        height;
+    }
 
+    photoCanvas.width = width;
+    photoCanvas.height = height;
 
     const ctx =
-        photoCanvas
-        .getContext("2d");
-
+        photoCanvas.getContext("2d");
 
     ctx.drawImage(
-
         video,
-
         0,
         0,
         width,
         height
-
     );
 
+    currentImage = photoCanvas;
 
-    lastPhoto =
-        photoCanvas;
-
+    previewCard.classList.remove("hidden");
 
     setStatus(
-        "📸 Foto diambil — identifikasi produk..."
+        "✅ Foto berhasil diambil. Tekan ANALISIS & HITUNG."
     );
 
-
-    analyzeProductAndCount();
-
 }
 
 
-// =====================================================
-// NORMALIZE TEXT
-// =====================================================
+/* =========================================================
+   UPLOAD PHOTO
+   ========================================================= */
 
+function uploadPhoto(event){
 
-function normalizeText(text) {
+    const file =
+        event.target.files[0];
 
-    return text
+    if(!file) return;
 
-        .toUpperCase()
+    const img =
+        new Image();
 
-        .replace(/[|]/g, "I")
+    img.onload = function(){
 
-        .replace(
-            /[^A-Z0-9+&\s]/g,
-            " "
-        )
+        let maxWidth = 1800;
 
-        .replace(
-            /\s+/g,
-            " "
-        )
+        let scale =
+            Math.min(
+                1,
+                maxWidth / img.width
+            );
 
-        .trim();
+        photoCanvas.width =
+            Math.round(img.width * scale);
 
-}
+        photoCanvas.height =
+            Math.round(img.height * scale);
 
+        const ctx =
+            photoCanvas.getContext("2d");
 
-// =====================================================
-// FIX OCR NUMBERS
-// =====================================================
-
-
-function fixOCRNumbers(text) {
-
-    return text
-
-        .toUpperCase()
-
-        .replace(
-            /\bI00\b/g,
-            "100"
-        )
-
-        .replace(
-            /\bL00\b/g,
-            "100"
-        )
-
-        .replace(
-            /\bIOO\b/g,
-            "100"
-        )
-
-        .replace(
-            /\bLOO\b/g,
-            "100"
+        ctx.drawImage(
+            img,
+            0,
+            0,
+            photoCanvas.width,
+            photoCanvas.height
         );
 
+        currentImage =
+            photoCanvas;
+
+        previewCard.classList.remove(
+            "hidden"
+        );
+
+        setStatus(
+            "✅ Foto berhasil diupload. Tekan ANALISIS & HITUNG."
+        );
+
+    };
+
+    img.src =
+        URL.createObjectURL(file);
+
 }
 
 
-// =====================================================
-// SIZE
-// =====================================================
+/* =========================================================
+   NORMALIZE OCR
+   ========================================================= */
 
+function normalizeText(text){
 
-function has100ML(text) {
+    if(!text) return "";
 
     let t =
-        fixOCRNumbers(text);
+        text
+        .toUpperCase()
+        .replace(/[|]/g,"I")
+        .replace(/[“”"]/g,"")
+        .replace(/\s+/g," ")
+        .trim();
 
+    t =
+        t.replace(/O(?=\d)/g,"0");
 
-    if (
-        /\b100\s*ML\b/.test(t)
-    ) {
+    t =
+        t.replace(/(\d)\s*ML\b/g,"$1 ML");
 
-        return true;
+    t =
+        t.replace(/(\d)\s*G\b/g,"$1 G");
 
-    }
-
-
-    if (
-        /\b100\b[\s\S]{0,10}\bML\b/.test(t)
-    ) {
-
-        return true;
-
-    }
-
-
-    return false;
+    return t;
 
 }
 
 
-// =====================================================
-// LEVENSHTEIN
-// =====================================================
+/* =========================================================
+   LEVENSHTEIN
+   ========================================================= */
 
+function levenshtein(a,b){
 
-function levenshtein(a,b) {
+    const m = a.length;
+    const n = b.length;
 
-    const matrix = [];
+    const dp =
+        Array.from(
+            {length:m+1},
+            () => new Array(n+1).fill(0)
+        );
 
+    for(let i=0;i<=m;i++)
+        dp[i][0] = i;
 
-    for (
-        let i = 0;
-        i <= b.length;
-        i++
-    ) {
+    for(let j=0;j<=n;j++)
+        dp[0][j] = j;
 
-        matrix[i] = [i];
+    for(let i=1;i<=m;i++){
 
-    }
+        for(let j=1;j<=n;j++){
 
+            const cost =
+                a[i-1] === b[j-1]
+                ? 0
+                : 1;
 
-    for (
-        let j = 0;
-        j <= a.length;
-        j++
-    ) {
+            dp[i][j] =
+                Math.min(
 
-        matrix[0][j] = j;
+                    dp[i-1][j] + 1,
 
-    }
+                    dp[i][j-1] + 1,
 
+                    dp[i-1][j-1] + cost
 
-    for (
-        let i = 1;
-        i <= b.length;
-        i++
-    ) {
-
-        for (
-            let j = 1;
-            j <= a.length;
-            j++
-        ) {
-
-            if (
-                b.charAt(i-1) ===
-                a.charAt(j-1)
-            ) {
-
-                matrix[i][j] =
-                    matrix[i-1][j-1];
-
-            }
-
-            else {
-
-                matrix[i][j] =
-                    Math.min(
-
-                        matrix[i-1][j-1]+1,
-
-                        matrix[i][j-1]+1,
-
-                        matrix[i-1][j]+1
-
-                    );
-
-            }
+                );
 
         }
 
     }
 
-
-    return matrix[b.length][a.length];
+    return dp[m][n];
 
 }
 
 
-// =====================================================
-// SIMILARITY
-// =====================================================
+function similarity(a,b){
 
+    a = normalizeText(a);
+    b = normalizeText(b);
 
-function similarity(a,b) {
-
-    a =
-        normalizeText(a);
-
-    b =
-        normalizeText(b);
-
-
-    if (!a || !b)
+    if(!a || !b)
         return 0;
-
 
     const distance =
         levenshtein(a,b);
 
-
-    const maxLength =
-        Math.max(
-            a.length,
-            b.length
-        );
-
-
-    return Math.max(
-        0,
-        1 -
+    return 1 -
         distance /
-        maxLength
-    );
+        Math.max(a.length,b.length);
 
 }
 
 
-// =====================================================
-// KEYWORD SCORE
-// =====================================================
+/* =========================================================
+   PRODUCT MATCH
+   ========================================================= */
 
-
-function keywordScore(text) {
+function matchProduct(text){
 
     const t =
         normalizeText(text);
 
+    let best = null;
 
-    let score = 0;
+    PRODUCTS.forEach(product => {
 
+        let score = 0;
 
-    if (
-        t.includes("BETADINE")
-    )
-        score += .30;
+        product.aliases.forEach(alias => {
 
+            const sim =
+                similarity(
+                    t,
+                    alias
+                );
 
-    if (
-        t.includes("MOUTHWASH")
-    )
-        score += .25;
+            score =
+                Math.max(
+                    score,
+                    sim
+                );
 
-
-    if (
-        t.includes("GARGLE")
-    )
-        score += .25;
-
-
-    if (
-        t.includes("MW")
-    )
-        score += .10;
+        });
 
 
-    if (
-        t.includes("IODINE")
-    )
-        score += .05;
+        /*
+         * Tambahan keyword
+         */
+
+        const keywords =
+            product.name
+            .split(" ");
+
+        let keywordHit = 0;
+
+        keywords.forEach(word => {
+
+            if(
+                word.length >= 3 &&
+                t.includes(word)
+            ){
+
+                keywordHit++;
+
+            }
+
+        });
+
+        if(keywords.length){
+
+            score +=
+                (keywordHit / keywords.length)
+                * 0.20;
+
+        }
 
 
-    if (
-        t.includes("POVIDONE")
-    )
-        score += .05;
+        /*
+         * SIZE
+         */
+
+        const size =
+            product.size
+            .replace(" ","");
+
+        const size2 =
+            product.size;
+
+        if(
+            t.includes(size) ||
+            t.includes(size2)
+        ){
+
+            score += 0.20;
+
+        }
 
 
-    return Math.min(
-        score,
-        1
-    );
+        if(!best || score > best.score){
+
+            best = {
+
+                product:product,
+                score:score
+
+            };
+
+        }
+
+    });
+
+
+    return best;
 
 }
 
 
-// =====================================================
-// PRODUCT MATCH
-// =====================================================
+/* =========================================================
+   CREATE OCR WORKER
+   ========================================================= */
+
+async function getOCRWorker(){
+
+    if(worker)
+        return worker;
+
+    setStatus(
+        "🔤 Menyiapkan mesin OCR..."
+    );
+
+    worker =
+        await Tesseract.createWorker(
+            "eng",
+            1,
+            {
+                logger:m => {
+
+                    if(
+                        m.status === "recognizing text" &&
+                        m.progress
+                    ){
+
+                        setProgress(
+                            m.progress * 30
+                        );
+
+                    }
+
+                }
+            }
+        );
+
+    await worker.setParameters({
+
+        tessedit_pageseg_mode:"11",
+
+        preserve_interword_spaces:"1"
+
+    });
+
+    return worker;
+
+}
 
 
-function matchProduct(text) {
+/* =========================================================
+   OCR IMAGE
+   ========================================================= */
 
-    const normalized =
-        normalizeText(text);
+async function OCRCanvas(canvas){
+
+    const w =
+        await getOCRWorker();
+
+    const result =
+        await w.recognize(canvas);
+
+    return result.data.text || "";
+
+}
 
 
-    let aliasScore = 0;
+/* =========================================================
+   OCR PREPROCESS
+   ========================================================= */
+
+function createOCRCanvas(source){
+
+    const canvas =
+        document.createElement("canvas");
+
+    canvas.width =
+        source.width;
+
+    canvas.height =
+        source.height;
+
+    const ctx =
+        canvas.getContext("2d");
+
+    ctx.drawImage(
+        source,
+        0,
+        0
+    );
+
+    return canvas;
+
+}
 
 
-    for (
-        const alias
-        of PRODUCT.aliases
-    ) {
+/* =========================================================
+   WHOLE IMAGE OCR
+   ========================================================= */
 
-        const score =
-            similarity(
-                normalized,
-                alias
+async function identifyProduct(){
+
+    setStatus(
+        "🔤 Membaca nama produk dan ukuran..."
+    );
+
+    setProgress(5);
+
+    let texts = [];
+
+    /*
+     * OCR ORIGINAL
+     */
+
+    const original =
+        createOCRCanvas(
+            currentImage
+        );
+
+    texts.push(
+        await OCRCanvas(original)
+    );
+
+
+    /*
+     * OCR GRAYSCALE / CONTRAST
+     */
+
+    const processed =
+        document.createElement("canvas");
+
+    processed.width =
+        currentImage.width;
+
+    processed.height =
+        currentImage.height;
+
+    const ctx =
+        processed.getContext("2d");
+
+    ctx.drawImage(
+        currentImage,
+        0,
+        0
+    );
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            processed.width,
+            processed.height
+        );
+
+    const data =
+        imageData.data;
+
+    for(
+        let i=0;
+        i<data.length;
+        i+=4
+    ){
+
+        const gray =
+            (
+                data[i] * 0.299 +
+                data[i+1] * 0.587 +
+                data[i+2] * 0.114
             );
 
+        const contrast =
+            Math.max(
+                0,
+                Math.min(
+                    255,
+                    (gray - 128) * 1.5 + 128
+                )
+            );
 
-        if (
-            score >
-            aliasScore
-        ) {
+        data[i] =
+            contrast;
 
-            aliasScore =
-                score;
+        data[i+1] =
+            contrast;
 
-        }
-
-    }
-
-
-    const keyword =
-        keywordScore(
-            normalized
-        );
-
-
-    const sizeOK =
-        has100ML(
-            normalized
-        );
-
-
-    let score =
-
-        keyword * .55 +
-
-        aliasScore * .25;
-
-
-    if (sizeOK) {
-
-        score += .20;
+        data[i+2] =
+            contrast;
 
     }
 
+    ctx.putImageData(
+        imageData,
+        0,
+        0
+    );
+
+    texts.push(
+        await OCRCanvas(processed)
+    );
+
+
+    /*
+     * GABUNGKAN OCR
+     */
+
+    const combined =
+        texts.join("\n");
+
+
+    ocrCard.classList.remove(
+        "hidden"
+    );
+
+    document.getElementById(
+        "ocrText"
+    ).textContent =
+        combined;
+
+
+    const match =
+        matchProduct(combined);
+
+    setProgress(40);
 
     return {
 
-        score:
-            Math.min(
-                score,
-                1
-            ),
+        text:combined,
 
-        sizeOK
+        match:match
 
     };
 
 }
 
 
-// =====================================================
-// OCR
-// =====================================================
+/* =========================================================
+   COUNTING
+   ========================================================= */
 
+function calculateIoU(a,b){
 
-async function runOCR() {
+    const x1 =
+        Math.max(a.x,b.x);
 
-    const worker =
-        await Tesseract.createWorker(
-            "eng"
+    const y1 =
+        Math.max(a.y,b.y);
+
+    const x2 =
+        Math.min(
+            a.x+a.width,
+            b.x+b.width
         );
 
-
-    await worker.setParameters({
-
-        tessedit_pageseg_mode:
-            "11",
-
-        preserve_interword_spaces:
-            "1"
-
-    });
-
-
-    const result =
-        await worker.recognize(
-            lastPhoto
+    const y2 =
+        Math.min(
+            a.y+a.height,
+            b.y+b.height
         );
 
+    const intersection =
+        Math.max(0,x2-x1) *
+        Math.max(0,y2-y1);
 
-    const text =
-        result.data.text || "";
+    const areaA =
+        a.width*a.height;
 
+    const areaB =
+        b.width*b.height;
 
-    await worker.terminate();
+    const union =
+        areaA +
+        areaB -
+        intersection;
 
-
-    return text;
+    return union
+        ? intersection/union
+        : 0;
 
 }
 
 
-// =====================================================
-// COUNT OBJECTS
-// =====================================================
+/* =========================================================
+   REMOVE OVERLAPPING BOXES
+   ========================================================= */
+
+function removeOverlaps(boxes){
+
+    boxes.sort(
+        (a,b) =>
+            b.area - a.area
+    );
+
+    const result = [];
+
+    boxes.forEach(box => {
+
+        let overlap = false;
+
+        for(const existing of result){
+
+            if(
+                calculateIoU(
+                    box,
+                    existing
+                ) > 0.35
+            ){
+
+                overlap = true;
+                break;
+
+            }
+
+        }
+
+        if(!overlap){
+
+            result.push(box);
+
+        }
+
+    });
+
+    return result;
+
+}
 
 
-function countBottles(source) {
+/* =========================================================
+   OBJECT DETECTION
+   ========================================================= */
 
-    if (
-        typeof cv ===
-        "undefined"
-    ) {
+function detectObjects(){
+
+    if(!cvReady){
 
         throw new Error(
             "OpenCV belum siap."
@@ -1463,1021 +1430,639 @@ function countBottles(source) {
 
     }
 
-
     const src =
         cv.imread(
-            source
+            currentImage
         );
-
-
-    const dst =
-        new cv.Mat();
-
 
     const gray =
         new cv.Mat();
 
-
     const blur =
         new cv.Mat();
 
-
-    const thresh =
+    const edges =
         new cv.Mat();
+
+    const kernel =
+        cv.Mat.ones(
+            5,
+            5,
+            cv.CV_8U
+        );
+
+
+    cv.cvtColor(
+        src,
+        gray,
+        cv.COLOR_RGBA2GRAY
+    );
+
+
+    cv.GaussianBlur(
+        gray,
+        blur,
+        new cv.Size(5,5),
+        0
+    );
+
+
+    cv.Canny(
+        blur,
+        edges,
+        40,
+        120
+    );
+
+
+    cv.dilate(
+        edges,
+        edges,
+        kernel
+    );
 
 
     const contours =
         new cv.MatVector();
 
-
     const hierarchy =
         new cv.Mat();
 
 
-    try {
-
-        // =========================================
-        // GRAYSCALE
-        // =========================================
-
-        cv.cvtColor(
-
-            src,
-
-            gray,
-
-            cv.COLOR_RGBA2GRAY
-
-        );
+    cv.findContours(
+        edges,
+        contours,
+        hierarchy,
+        cv.RETR_EXTERNAL,
+        cv.CHAIN_APPROX_SIMPLE
+    );
 
 
-        // =========================================
-        // BLUR
-        // =========================================
+    const imageArea =
+        src.cols * src.rows;
 
-        cv.GaussianBlur(
-
-            gray,
-
-            blur,
-
-            new cv.Size(7,7),
-
-            0
-
-        );
+    let boxes = [];
 
 
-        // =========================================
-        // EDGE
-        // =========================================
+    for(
+        let i=0;
+        i<contours.size();
+        i++
+    ){
 
-        cv.Canny(
+        const contour =
+            contours.get(i);
 
-            blur,
-
-            thresh,
-
-            60,
-
-            150
-
-        );
-
-
-        // =========================================
-        // DILATE
-        // =========================================
-
-        const kernel =
-            cv.Mat.ones(
-                5,
-                5,
-                cv.CV_8U
+        const rect =
+            cv.boundingRect(
+                contour
             );
 
+        const area =
+            rect.width *
+            rect.height;
 
-        cv.dilate(
+        const ratio =
+            rect.width /
+            rect.height;
 
-            thresh,
 
-            thresh,
+        /*
+         * Filter object
+         */
 
-            kernel
-
-        );
-
-
-        kernel.delete();
-
-
-        // =========================================
-        // FIND CONTOURS
-        // =========================================
-
-        cv.findContours(
-
-            thresh,
-
-            contours,
-
-            hierarchy,
-
-            cv.RETR_EXTERNAL,
-
-            cv.CHAIN_APPROX_SIMPLE
-
-        );
-
-
-        let candidates = [];
-
-
-        const imageArea =
-            src.cols *
-            src.rows;
-
-
-        for (
-            let i = 0;
-            i < contours.size();
-            i++
-        ) {
-
-            const contour =
-                contours.get(i);
-
-
-            const rect =
-                cv.boundingRect(
-                    contour
-                );
-
-
-            const area =
-                rect.width *
-                rect.height;
-
-
-            const ratio =
-                rect.height /
-                Math.max(
-                    rect.width,
-                    1
-                );
-
-
-            const areaRatio =
-                area /
-                imageArea;
-
-
-            // =====================================
-            // FILTER
-            // =====================================
-
-            // abaikan benda terlalu kecil
-
-            if (
-                areaRatio < 0.015
-            ) {
-
-                contour.delete();
-
-                continue;
-
-            }
-
-
-            // abaikan benda terlalu besar
-
-            if (
-                areaRatio > 0.60
-            ) {
-
-                contour.delete();
-
-                continue;
-
-            }
-
-
-            // botol umumnya lebih tinggi
-            // daripada lebar
-
-            if (
-                ratio < 1.05
-            ) {
-
-                contour.delete();
-
-                continue;
-
-            }
-
-
-            if (
-                ratio > 6
-            ) {
-
-                contour.delete();
-
-                continue;
-
-            }
-
-
-            candidates.push({
-
-                x:
-                    rect.x,
-
-                y:
-                    rect.y,
-
-                width:
-                    rect.width,
-
-                height:
-                    rect.height,
-
-                area
-
-            });
-
+        if(
+            area < imageArea * 0.008
+        ){
 
             contour.delete();
 
+            continue;
+
         }
 
 
-        // =========================================
-        // REMOVE DUPLICATE / OVERLAP
-        // =========================================
+        if(
+            area > imageArea * 0.60
+        ){
 
-        candidates =
-            removeOverlaps(
-                candidates
-            );
+            contour.delete();
 
+            continue;
 
-        // =========================================
-        // DRAW
-        // =========================================
-
-        const output =
-            document.getElementById(
-                "resultCanvas"
-            );
+        }
 
 
-        output.width =
-            source.width;
+        if(
+            ratio < 0.20 ||
+            ratio > 4.5
+        ){
+
+            contour.delete();
+
+            continue;
+
+        }
 
 
-        output.height =
-            source.height;
+        /*
+         * Hindari object terlalu kecil
+         */
+
+        if(
+            rect.width < 40 ||
+            rect.height < 40
+        ){
+
+            contour.delete();
+
+            continue;
+
+        }
 
 
-        const ctx =
-            output.getContext(
-                "2d"
-            );
+        boxes.push({
+
+            x:rect.x,
+
+            y:rect.y,
+
+            width:rect.width,
+
+            height:rect.height,
+
+            area:area
+
+        });
 
 
-        ctx.drawImage(
-            source,
-            0,
-            0
-        );
-
-
-        ctx.lineWidth =
-            Math.max(
-                3,
-                source.width / 400
-            );
-
-
-        ctx.font =
-            Math.max(
-                18,
-                source.width / 35
-            ) +
-            "px Arial";
-
-
-        candidates.forEach(
-
-            (box,index) => {
-
-                ctx.strokeStyle =
-                    "#00ff66";
-
-
-                ctx.strokeRect(
-
-                    box.x,
-
-                    box.y,
-
-                    box.width,
-
-                    box.height
-
-                );
-
-
-                ctx.fillStyle =
-                    "#00ff66";
-
-
-                ctx.fillText(
-
-                    "BOTOL " +
-                    (index + 1),
-
-                    box.x,
-
-                    Math.max(
-                        25,
-                        box.y - 8
-                    )
-
-                );
-
-            }
-
-        );
-
-
-        output.style.display =
-            "block";
-
-
-        return candidates.length;
+        contour.delete();
 
     }
 
-    finally {
 
-        src.delete();
+    /*
+     * Hapus box yang tumpang tindih
+     */
 
-        dst.delete();
+    boxes =
+        removeOverlaps(
+            boxes
+        );
 
-        gray.delete();
 
-        blur.delete();
+    /*
+     * Batasi jumlah maksimal
+     */
 
-        thresh.delete();
+    boxes =
+        boxes
+        .sort(
+            (a,b) =>
+                a.y - b.y ||
+                a.x - b.x
+        )
+        .slice(0,50);
 
-        contours.delete();
 
-        hierarchy.delete();
+    src.delete();
+    gray.delete();
+    blur.delete();
+    edges.delete();
+    kernel.delete();
+    contours.delete();
+    hierarchy.delete();
 
-    }
+
+    return boxes;
 
 }
 
 
-// =====================================================
-// REMOVE OVERLAPS
-// =====================================================
+/* =========================================================
+   DRAW COUNT BOXES
+   ========================================================= */
 
+function drawBoxes(boxes){
 
-function removeOverlaps(
-    boxes
-) {
+    countCanvas.width =
+        currentImage.width;
 
-    const result = [];
+    countCanvas.height =
+        currentImage.height;
 
+    const ctx =
+        countCanvas.getContext("2d");
 
-    // terbesar dahulu
-
-    boxes.sort(
-        (a,b) =>
-            b.area - a.area
+    ctx.drawImage(
+        currentImage,
+        0,
+        0
     );
 
 
-    for (
-        const box
-        of boxes
-    ) {
+    boxes.forEach(
+        (box,index) => {
 
-        let overlap =
-            false;
+            ctx.strokeStyle =
+                "#00e676";
 
+            ctx.lineWidth = 4;
 
-        for (
-            const existing
-            of result
-        ) {
-
-            const x1 =
-                Math.max(
-                    box.x,
-                    existing.x
-                );
+            ctx.strokeRect(
+                box.x,
+                box.y,
+                box.width,
+                box.height
+            );
 
 
-            const y1 =
-                Math.max(
-                    box.y,
-                    existing.y
-                );
+            ctx.fillStyle =
+                "#00e676";
+
+            ctx.font =
+                "bold 24px Arial";
 
 
-            const x2 =
-                Math.min(
-
-                    box.x +
-                    box.width,
-
-                    existing.x +
-                    existing.width
-
-                );
+            const label =
+                "#" + (index+1);
 
 
-            const y2 =
-                Math.min(
-
-                    box.y +
-                    box.height,
-
-                    existing.y +
-                    existing.height
-
-                );
+            const textWidth =
+                ctx.measureText(
+                    label
+                ).width;
 
 
-            const intersectionWidth =
+            ctx.fillRect(
+                box.x,
                 Math.max(
                     0,
-                    x2 - x1
-                );
+                    box.y-30
+                ),
+                textWidth+14,
+                30
+            );
 
 
-            const intersectionHeight =
+            ctx.fillStyle =
+                "#000";
+
+            ctx.fillText(
+                label,
+                box.x+7,
                 Math.max(
-                    0,
-                    y2 - y1
-                );
-
-
-            const intersection =
-                intersectionWidth *
-                intersectionHeight;
-
-
-            const smaller =
-                Math.min(
-                    box.area,
-                    existing.area
-                );
-
-
-            if (
-                smaller > 0 &&
-                intersection /
-                smaller >
-                0.45
-            ) {
-
-                overlap =
-                    true;
-
-                break;
-
-            }
-
-        }
-
-
-        if (!overlap) {
-
-            result.push(
-                box
+                    22,
+                    box.y-8
+                )
             );
 
         }
-
-    }
-
-
-    return result;
-
-}
-
-
-// =====================================================
-// WAIT OPENCV
-// =====================================================
-
-
-function waitForOpenCV() {
-
-    return new Promise(
-
-        resolve => {
-
-            const check =
-                () => {
-
-                    if (
-                        typeof cv !==
-                        "undefined" &&
-                        cv.Mat
-                    ) {
-
-                        resolve();
-
-                    }
-
-                    else {
-
-                        setTimeout(
-                            check,
-                            200
-                        );
-
-                    }
-
-                };
-
-
-            check();
-
-        }
-
     );
 
 }
 
 
-// =====================================================
-// MAIN
-// =====================================================
+/* =========================================================
+   COUNT WITH SMART FILTER
+   ========================================================= */
+
+function countObjects(){
+
+    setStatus(
+        "🎯 Menghitung jumlah sampel..."
+    );
+
+    setProgress(50);
+
+    const boxes =
+        detectObjects();
+
+    drawBoxes(boxes);
+
+    countCard.classList.remove(
+        "hidden"
+    );
+
+    setProgress(70);
+
+    return boxes;
+
+}
 
 
-async function analyzeProductAndCount() {
+/* =========================================================
+   RESULT
+   ========================================================= */
 
-    const productEl =
-        document.getElementById(
-            "product"
-        );
+function showResult(product,count){
 
-
-    const codeEl =
-        document.getElementById(
-            "code"
-        );
+    resultCard.classList.remove(
+        "hidden"
+    );
 
 
-    const sizeEl =
-        document.getElementById(
-            "size"
-        );
+    document.getElementById(
+        "resultProduct"
+    ).textContent =
+        product.name;
 
 
-    const confidenceEl =
-        document.getElementById(
-            "confidence"
-        );
+    document.getElementById(
+        "resultSize"
+    ).textContent =
+        product.size;
 
 
-    const ocrEl =
-        document.getElementById(
-            "ocrText"
-        );
+    document.getElementById(
+        "resultCode"
+    ).textContent =
+        "Kode Produk: " +
+        product.code;
 
 
-    const countEl =
-        document.getElementById(
-            "count"
-        );
+    document.getElementById(
+        "resultCount"
+    ).textContent =
+        count;
 
 
-    const countStatusEl =
-        document.getElementById(
-            "countStatus"
-        );
+    document.getElementById(
+        "resultTable"
+    ).innerHTML = `
+
+        <tr>
+
+            <td>
+                ${product.name}
+            </td>
+
+            <td>
+                ${product.size}
+            </td>
+
+            <td>
+                ${product.code}
+            </td>
+
+            <td>
+                <strong>
+                    ${count} PCS
+                </strong>
+            </td>
+
+        </tr>
+
+    `;
+
+}
 
 
-    // RESET
+/* =========================================================
+   MAIN ANALYSIS
+   ========================================================= */
 
-    productEl.innerText =
-        "Menganalisis...";
+async function analyzeImage(){
 
-
-    codeEl.innerText =
-        "-";
-
-
-    sizeEl.innerText =
-        "-";
-
-
-    confidenceEl.innerText =
-        "-";
-
-
-    countEl.innerText =
-        "-";
-
-
-    countStatusEl.innerText =
-        "Menunggu...";
-
-
-    resultCanvas.style.display =
-        "none";
-
-
-    try {
-
-        // =========================================
-        // OCR
-        // =========================================
-
-        setProgress(15);
+    if(!currentImage){
 
         setStatus(
-            "🔤 Membaca produk dengan OCR..."
+            "⚠️ Belum ada foto. Ambil foto atau upload terlebih dahulu."
+        );
+
+        return;
+
+    }
+
+
+    try{
+
+        resultCard.classList.add(
+            "hidden"
+        );
+
+        countCard.classList.add(
+            "hidden"
         );
 
 
-        const ocrText =
-            await runOCR();
+        /*
+         * 1. IDENTIFIKASI PRODUK
+         */
 
-
-        ocrEl.innerText =
-            ocrText ||
-            "Tidak ada teks terbaca.";
+        const identification =
+            await identifyProduct();
 
 
         const match =
-            matchProduct(
-                ocrText
-            );
+            identification.match;
 
 
-        const percent =
-            Math.round(
-                match.score * 100
-            );
+        if(
+            !match ||
+            match.score < 0.45
+        ){
 
+            setProgress(0);
 
-        // =========================================
-        // PRODUCT RESULT
-        // =========================================
-
-        if (
-            match.score >= 0.55 &&
-            match.sizeOK
-        ) {
-
-            productEl.innerText =
-                PRODUCT.name;
-
-
-            productEl.className =
-                "value success";
-
-
-            codeEl.innerText =
-                PRODUCT.code;
-
-
-            sizeEl.innerText =
-                "100 ML";
-
-
-            confidenceEl.innerText =
-                percent + "%";
-
-
-            confidenceEl.className =
-                "value success";
-
-        }
-
-        else if (
-            match.score >= 0.30
-        ) {
-
-            productEl.innerText =
-                "⚠️ Kandidat P0008";
-
-
-            productEl.className =
-                "value warning";
-
-
-            codeEl.innerText =
-                PRODUCT.code;
-
-
-            sizeEl.innerText =
-                match.sizeOK
-                ? "100 ML"
-                : "Belum terbaca";
-
-
-            confidenceEl.innerText =
-                percent +
-                "% — perlu verifikasi";
-
-
-            confidenceEl.className =
-                "value warning";
-
-        }
-
-        else {
-
-            productEl.innerText =
-                "❌ Produk belum dikenali";
-
-
-            productEl.className =
-                "value danger";
-
-
-            codeEl.innerText =
-                "-";
-
-
-            sizeEl.innerText =
-                "-";
-
-
-            confidenceEl.innerText =
-                percent + "%";
-
-
-            countEl.innerText =
-                "-";
-
-
-            countStatusEl.innerText =
-                "Counting tidak dijalankan";
-
-
-            setProgress(100);
-
-
-            setStatus(
-                "❌ Produk belum cukup jelas"
-            );
-
+            setStatus(`
+                ❌ Produk belum dapat dikenali dengan cukup yakin.<br>
+                Pastikan tulisan nama produk dan ukuran terlihat jelas.
+            `);
 
             return;
 
         }
 
 
-        // =========================================
-        // OBJECT COUNTING
-        // =========================================
+        const product =
+            match.product;
 
-        setProgress(55);
 
         setStatus(
-            "📦 Menyiapkan object counting..."
+            `✅ Produk teridentifikasi:
+            <strong>${product.name}</strong>
+            ${product.size}`
         );
 
 
-        await waitForOpenCV();
+        /*
+         * 2. COUNTING
+         */
+
+        const boxes =
+            countObjects();
 
 
-        setProgress(65);
+        let count =
+            boxes.length;
 
-        setStatus(
-            "🔎 Mendeteksi bentuk botol..."
+
+        /*
+         * Jika hanya satu objek
+         * dan contour tidak bagus,
+         * tetap minimal 1.
+         */
+
+        if(count === 0){
+
+            count = 1;
+
+            drawBoxes([
+
+                {
+                    x:10,
+                    y:10,
+                    width:
+                        currentImage.width-20,
+                    height:
+                        currentImage.height-20
+                }
+
+            ]);
+
+        }
+
+
+        /*
+         * 3. TAMPILKAN HASIL
+         */
+
+        showResult(
+            product,
+            count
         );
 
 
-        const count =
-            countBottles(
-                lastPhoto
-            );
+        document.getElementById(
+            "countInfo"
+        ).innerHTML = `
 
+            <strong>
+                ${count} objek terdeteksi.
+            </strong>
 
-        // =========================================
-        // RESULT
-        // =========================================
+            <br>
 
-        countEl.innerText =
-            count;
+            Produk yang digunakan untuk
+            counting:
 
+            <strong>
+                ${product.name}
+                ${product.size}
+            </strong>
 
-        if (
-            count === 1
-        ) {
+            <br><br>
 
-            countStatusEl.innerText =
-                "✅ 1 botol terdeteksi";
+            Kotak hijau = objek yang dihitung.
 
-            countStatusEl.className =
-                "value success";
+            <br>
 
-        }
+            <strong>
+                Catatan:
+            </strong>
+            Counting berbasis bentuk/contour
+            sehingga hasil paling baik jika
+            sampel tidak saling menutupi.
 
-        else if (
-            count === 2
-        ) {
-
-            countStatusEl.innerText =
-                "✅ 2 botol terdeteksi";
-
-            countStatusEl.className =
-                "value success";
-
-        }
-
-        else if (
-            count === 3
-        ) {
-
-            countStatusEl.innerText =
-                "✅ 3 botol terdeteksi";
-
-            countStatusEl.className =
-                "value success";
-
-        }
-
-        else if (
-            count > 3
-        ) {
-
-            countStatusEl.innerText =
-                "⚠️ " +
-                count +
-                " objek terdeteksi — perlu verifikasi";
-
-            countStatusEl.className =
-                "value warning";
-
-        }
-
-        else {
-
-            countStatusEl.innerText =
-                "❌ Botol belum terdeteksi";
-
-            countStatusEl.className =
-                "value danger";
-
-        }
+        `;
 
 
         setProgress(100);
 
-
         setStatus(
-            "✅ Analisis selesai"
+            `✅ Analisis selesai.
+             Produk: <strong>${product.name}</strong>.
+             Jumlah: <strong>${count} PCS</strong>.`
         );
 
-    }
 
-    catch (error) {
+    }catch(error){
 
         console.error(error);
 
-
         setProgress(0);
 
-
         setStatus(
-            "❌ Analisis gagal: " +
-            error.message
+            "❌ Terjadi kesalahan saat analisis: "
+            + error.message
         );
-
-
-        countEl.innerText =
-            "-";
-
-
-        countStatusEl.innerText =
-            "Gagal menghitung";
 
     }
 
 }
 
 
-// =====================================================
-// RESET
-// =====================================================
+/* =========================================================
+   RESET
+   ========================================================= */
+
+function resetAll(){
+
+    if(stream){
+
+        stream.getTracks().forEach(
+            track => track.stop()
+        );
+
+        stream = null;
+
+    }
 
 
-function resetScan() {
-
-    document.getElementById(
-        "product"
-    ).innerText =
-        "Belum dianalisis";
+    currentImage = null;
 
 
-    document.getElementById(
-        "product"
-    ).className =
-        "value";
+    previewCard.classList.add(
+        "hidden"
+    );
 
+    resultCard.classList.add(
+        "hidden"
+    );
 
-    document.getElementById(
-        "code"
-    ).innerText =
-        "-";
+    countCard.classList.add(
+        "hidden"
+    );
 
-
-    document.getElementById(
-        "size"
-    ).innerText =
-        "-";
-
-
-    document.getElementById(
-        "confidence"
-    ).innerText =
-        "-";
-
-
-    document.getElementById(
-        "count"
-    ).innerText =
-        "-";
-
-
-    document.getElementById(
-        "countStatus"
-    ).innerText =
-        "Belum dihitung";
-
-
-    document.getElementById(
-        "countStatus"
-    ).className =
-        "value";
+    ocrCard.classList.add(
+        "hidden"
+    );
 
 
     document.getElementById(
         "ocrText"
-    ).innerText =
-        "Belum ada hasil OCR.";
+    ).textContent = "";
 
 
-    resultCanvas.style.display =
-        "none";
+    document.getElementById(
+        "resultTable"
+    ).innerHTML = "";
+
+
+    document.getElementById(
+        "fileInput"
+    ).value = "";
+
+
+    const ctx =
+        photoCanvas.getContext("2d");
+
+    ctx.clearRect(
+        0,
+        0,
+        photoCanvas.width,
+        photoCanvas.height
+    );
 
 
     setProgress(0);
 
-
-    if (stream) {
-
-        setStatus(
-            "Kamera aktif — siap foto"
-        );
-
-    }
-
-    else {
-
-        setStatus(
-            "Kamera belum aktif"
-        );
-
-    }
+    setStatus(
+        "Siap. Ambil foto atau upload foto."
+    );
 
 }
-
-
-// =====================================================
-// STOP CAMERA
-// =====================================================
-
-
-window.addEventListener(
-    "beforeunload",
-    () => {
-
-        if (stream) {
-
-            stream
-                .getTracks()
-                .forEach(
-                    track =>
-                        track.stop()
-                );
-
-        }
-
-    }
-);
 
 </script>
 
