@@ -10,35 +10,29 @@
     content="width=device-width, initial-scale=1.0">
 
 <title>
-Scan Produk V6.2 - OCR + Object Detection
+Scan Produk V7 - OCR + Object Detection
 </title>
 
 
-<!-- =====================================================
-     TESSERACT OCR
-===================================================== -->
+<!-- ================================================= -->
+<!-- TESSERACT OCR -->
+<!-- ================================================= -->
 
-<script
-    src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">
-</script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 
-<!-- =====================================================
-     TENSORFLOW JS
-===================================================== -->
+<!-- ================================================= -->
+<!-- TENSORFLOW -->
+<!-- ================================================= -->
 
-<script
-    src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js">
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
 
 
-<!-- =====================================================
-     COCO SSD OBJECT DETECTION
-===================================================== -->
+<!-- ================================================= -->
+<!-- COCO SSD -->
+<!-- ================================================= -->
 
-<script
-    src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd">
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 
 
 <style>
@@ -65,7 +59,7 @@ body {
 
 .container {
 
-    max-width: 800px;
+    max-width: 750px;
 
     margin: auto;
 
@@ -172,9 +166,9 @@ canvas {
 
     right: 8%;
 
-    top: 12%;
+    top: 15%;
 
-    bottom: 12%;
+    bottom: 15%;
 
     border:
 
@@ -280,11 +274,11 @@ input[type="file"] {
 
     padding: 12px;
 
-    background: #f4f6f8;
+    border: 2px dashed #bbb;
 
     border-radius: 10px;
 
-    border: 1px solid #ddd;
+    background: #fafafa;
 
 }
 
@@ -336,7 +330,7 @@ input[type="file"] {
 
     text-align: center;
 
-    font-size: 55px;
+    font-size: 65px;
 
     font-weight: bold;
 
@@ -428,41 +422,60 @@ pre {
 
     border-radius: 10px;
 
-    padding: 10px;
+    padding: 12px;
 
     font-size: 13px;
 
     line-height: 1.5;
+
+}
+
+
+.divider {
+
+    height: 1px;
+
+    background: #eee;
+
+    margin: 15px 0;
 
 }
 
 
 .model-status {
 
-    background: #fff7e6;
+    padding: 10px;
 
     border-radius: 10px;
 
+    background: #f5f5f5;
+
+    font-size: 13px;
+
+}
+
+
+.detection-list {
+
+    margin-top: 10px;
+
+}
+
+
+.detection-item {
+
+    background: #f5f7f9;
+
     padding: 10px;
 
-    font-size: 13px;
+    border-radius: 8px;
 
-    line-height: 1.5;
-
-}
-
-
-.file-name {
-
-    margin-top: 8px;
+    margin-top: 6px;
 
     font-size: 13px;
 
-    color: #555;
-
-    word-break: break-word;
-
 }
+
 
 </style>
 
@@ -476,7 +489,7 @@ pre {
 
 
 <h1>
-📷 Scan Produk V6.2
+📷 Scan Produk V7
 </h1>
 
 
@@ -487,32 +500,9 @@ OCR + Object Detection + Counting
 </div>
 
 
-<!-- =====================================================
-     MODEL STATUS
-===================================================== -->
-
-<div class="card">
-
-<div class="model-status">
-
-<b>🤖 Status AI</b>
-
-<div
-    id="modelStatus"
-    style="margin-top:6px;">
-
-Memuat model object detection...
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- =====================================================
-     CAMERA
-===================================================== -->
+<!-- ================================================= -->
+<!-- CAMERA -->
+<!-- ================================================= -->
 
 <div class="card">
 
@@ -531,7 +521,7 @@ Memuat model object detection...
 
 <div class="guide-text">
 
-Arahkan semua botol agar terlihat jelas
+Posisikan seluruh produk terlihat jelas
 
 </div>
 
@@ -573,21 +563,14 @@ Arahkan semua botol agar terlihat jelas
 </button>
 
 
-</div>
+<div class="divider"></div>
 
 
-<!-- =====================================================
-     UPLOAD
-===================================================== -->
+<label>
 
-<div class="card">
+<b>Atau upload foto</b>
 
-
-<div class="label">
-
-📁 Upload Foto
-
-</div>
+</label>
 
 
 <input
@@ -596,31 +579,12 @@ Arahkan semua botol agar terlihat jelas
     accept="image/*">
 
 
-<div
-    id="fileName"
-    class="file-name">
-
-Belum ada foto dipilih
-
 </div>
 
 
-<button
-    class="btn-orange"
-    id="btnUploadAnalyze"
-    onclick="analyzeUploadedPhoto()">
-
-🔎 ANALISIS FOTO
-
-</button>
-
-
-</div>
-
-
-<!-- =====================================================
-     STATUS
-===================================================== -->
+<!-- ================================================= -->
+<!-- STATUS -->
+<!-- ================================================= -->
 
 <div class="card">
 
@@ -636,7 +600,7 @@ Status
     id="status"
     class="value">
 
-Siap digunakan
+Memuat model...
 
 </div>
 
@@ -654,9 +618,35 @@ Siap digunakan
 </div>
 
 
-<!-- =====================================================
-     PRODUCT
-===================================================== -->
+<!-- ================================================= -->
+<!-- MODEL -->
+<!-- ================================================= -->
+
+<div class="card">
+
+
+<div class="label">
+
+Status Model Deteksi
+
+</div>
+
+
+<div
+    id="modelStatus"
+    class="model-status">
+
+⏳ Memuat COCO-SSD...
+
+</div>
+
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- PRODUCT -->
+<!-- ================================================= -->
 
 <div class="card">
 
@@ -728,16 +718,16 @@ OCR Confidence
 </div>
 
 
-<!-- =====================================================
-     COUNT
-===================================================== -->
+<!-- ================================================= -->
+<!-- COUNT -->
+<!-- ================================================= -->
 
 <div class="card">
 
 
 <div class="label">
 
-📦 JUMLAH PRODUK
+📦 JUMLAH UNIT TERDETEKSI
 
 </div>
 
@@ -763,9 +753,9 @@ Belum dihitung
 </div>
 
 
-<!-- =====================================================
-     DETECTION RESULT
-===================================================== -->
+<!-- ================================================= -->
+<!-- DETECTION -->
+<!-- ================================================= -->
 
 <div class="card">
 
@@ -783,11 +773,15 @@ Belum dihitung
 
 
 <div
-    id="detectionInfo"
-    class="small"
-    style="margin-top:10px;">
+    id="detectionList"
+    class="detection-list">
+</div>
 
-Belum ada hasil deteksi.
+
+<div class="small">
+
+Kotak hijau menunjukkan objek
+yang dianggap sebagai botol.
 
 </div>
 
@@ -795,9 +789,9 @@ Belum ada hasil deteksi.
 </div>
 
 
-<!-- =====================================================
-     OCR RESULT
-===================================================== -->
+<!-- ================================================= -->
+<!-- OCR -->
+<!-- ================================================= -->
 
 <div class="card">
 
@@ -819,34 +813,43 @@ Belum ada hasil OCR.
 </div>
 
 
-<!-- =====================================================
-     INFO
-===================================================== -->
+<!-- ================================================= -->
+<!-- INFO -->
+<!-- ================================================= -->
 
 <div class="card">
 
 
 <div class="info-box">
 
-<b>V6.2 menggunakan Object Detection</b>
+<b>V7 — Cara kerja</b>
 
 <br><br>
 
-Counting tidak lagi menggunakan
-OpenCV contour.
+1. Foto produk melalui kamera atau upload.
 
-Model AI mencari objek
-<b>bottle</b> secara langsung.
+<br>
+
+2. OCR membaca nama dan ukuran produk.
+
+<br>
+
+3. Sistem mencocokkan OCR dengan master produk.
+
+<br>
+
+4. Object Detection mencari objek fisik.
+
+<br>
+
+5. Objek yang lolos filter dihitung sebagai unit.
 
 <br><br>
 
-Jadi tulisan pada label,
-bagian tutup,
-tangan,
-keyboard,
-dan garis-garis pada botol
-tidak dihitung sebagai produk
-secara terpisah.
+<b>Penting:</b>
+
+Versi ini tidak menggunakan contour OpenCV
+untuk menghitung botol.
 
 </div>
 
@@ -861,49 +864,45 @@ secara terpisah.
 
 
 // =====================================================
-// PRODUCT MASTER
+// MASTER PRODUK
 // =====================================================
 
-const PRODUCTS = [
+const PRODUCT = {
 
-    {
+    code: "P0008",
 
-        code:
-            "P0008",
+    name:
+        "BETADINE MOUTHWASH AND GARGLE",
 
-        name:
-            "BETADINE MOUTHWASH AND GARGLE",
+    fullName:
+        "BETADINE MOUTHWASH AND GARGLE 100 ML",
 
-        size:
-            "100 ML",
+    size:
+        "100 ML",
 
-        aliases: [
+    aliases: [
 
-            "BETADINE",
+        "BETADINE",
 
-            "BETADINE MOUTHWASH",
+        "BETADINE MOUTHWASH",
 
-            "BETADINE GARGLE",
+        "BETADINE GARGLE",
 
-            "BETADINE MOUTHWASH GARGLE",
+        "BETADINE MOUTHWASH GARGLE",
 
-            "BETADINE MOUTHWASH AND GARGLE",
+        "BETADINE MOUTHWASH AND GARGLE",
 
-            "BETADINE MOUTHWASH & GARGLE",
+        "BETADINE MOUTHWASH & GARGLE",
 
-            "BETADINE MW GARGLE",
+        "MOUTHWASH AND GARGLE",
 
-            "MOUTHWASH AND GARGLE",
+        "MOUTHWASH GARGLE",
 
-            "MOUTHWASH GARGLE",
+        "POVIDONE IODINE"
 
-            "POVIDONE IODINE"
+    ]
 
-        ]
-
-    }
-
-];
+};
 
 
 // =====================================================
@@ -919,9 +918,7 @@ let lastPhoto = null;
 
 let detectionModel = null;
 
-let modelReady = false;
-
-let isAnalyzing = false;
+let ocrWorker = null;
 
 
 // =====================================================
@@ -966,8 +963,7 @@ function setStatus(text) {
 
     document.getElementById(
         "status"
-    ).innerText =
-        text;
+    ).innerText = text;
 
 }
 
@@ -983,415 +979,20 @@ function setProgress(value) {
 
 
 // =====================================================
-// LOAD MODEL
-// =====================================================
-
-async function loadDetectionModel() {
-
-    try {
-
-        document.getElementById(
-            "modelStatus"
-        ).innerText =
-            "Memuat model object detection...";
-
-
-        setStatus(
-            "Memuat AI object detection..."
-        );
-
-
-        setProgress(10);
-
-
-        await tf.ready();
-
-
-        detectionModel =
-            await cocoSsd.load({
-
-                base:
-                    "lite_mobilenet_v2"
-
-            });
-
-
-        modelReady =
-            true;
-
-
-        document.getElementById(
-            "modelStatus"
-        ).innerHTML =
-            "✅ Model object detection siap.";
-
-
-        setProgress(100);
-
-
-        setStatus(
-            "✅ AI siap — kamera/upload dapat digunakan"
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-
-        document.getElementById(
-            "modelStatus"
-        ).innerHTML =
-            "❌ Model gagal dimuat: " +
-            error.message;
-
-
-        setStatus(
-            "❌ AI gagal dimuat"
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// CAMERA
-// =====================================================
-
-async function startCamera() {
-
-    try {
-
-        setStatus(
-            "Membuka kamera..."
-        );
-
-
-        setProgress(5);
-
-
-        if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia
-        ) {
-
-            throw new Error(
-                "Browser tidak mendukung kamera."
-            );
-
-        }
-
-
-        if (stream) {
-
-            stream
-                .getTracks()
-                .forEach(
-                    track =>
-                        track.stop()
-                );
-
-        }
-
-
-        stream =
-            await navigator.mediaDevices
-            .getUserMedia({
-
-                video: {
-
-                    facingMode: {
-
-                        ideal:
-                            facingMode
-
-                    },
-
-                    width: {
-
-                        ideal: 1920
-
-                    },
-
-                    height: {
-
-                        ideal: 1080
-
-                    }
-
-                },
-
-                audio: false
-
-            });
-
-
-        video.srcObject =
-            stream;
-
-
-        await video.play();
-
-
-        btnPhoto.disabled =
-            false;
-
-
-        setProgress(100);
-
-
-        setStatus(
-            "✅ Kamera aktif — siap foto"
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-
-        setProgress(0);
-
-
-        setStatus(
-            "❌ Kamera gagal: " +
-            error.message
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// SWITCH CAMERA
-// =====================================================
-
-async function switchCamera() {
-
-    facingMode =
-        facingMode ===
-        "environment"
-
-        ? "user"
-
-        : "environment";
-
-
-    await startCamera();
-
-}
-
-
-// =====================================================
-// TAKE PHOTO
-// =====================================================
-
-function takePhoto() {
-
-    if (
-        !video.videoWidth
-    ) {
-
-        alert(
-            "Kamera belum siap."
-        );
-
-        return;
-
-    }
-
-
-    const width =
-        video.videoWidth;
-
-
-    const height =
-        video.videoHeight;
-
-
-    photoCanvas.width =
-        width;
-
-
-    photoCanvas.height =
-        height;
-
-
-    const ctx =
-        photoCanvas.getContext(
-            "2d"
-        );
-
-
-    ctx.drawImage(
-
-        video,
-
-        0,
-        0,
-        width,
-        height
-
-    );
-
-
-    lastPhoto =
-        photoCanvas;
-
-
-    analyzeCurrentPhoto();
-
-}
-
-
-// =====================================================
-// UPLOAD CHANGE
-// =====================================================
-
-fileInput.addEventListener(
-
-    "change",
-
-    function() {
-
-        const file =
-            this.files[0];
-
-
-        if (!file) {
-
-            document.getElementById(
-                "fileName"
-            ).innerText =
-                "Belum ada foto dipilih";
-
-            return;
-
-        }
-
-
-        document.getElementById(
-            "fileName"
-        ).innerText =
-            "📷 " + file.name;
-
-    }
-
-);
-
-
-// =====================================================
-// UPLOAD ANALYZE
-// =====================================================
-
-function analyzeUploadedPhoto() {
-
-    const file =
-        fileInput.files[0];
-
-
-    if (!file) {
-
-        alert(
-            "Pilih foto terlebih dahulu."
-        );
-
-        return;
-
-    }
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload =
-        function(event) {
-
-            const img =
-                new Image();
-
-
-            img.onload =
-                function() {
-
-                    photoCanvas.width =
-                        img.naturalWidth;
-
-
-                    photoCanvas.height =
-                        img.naturalHeight;
-
-
-                    const ctx =
-                        photoCanvas
-                        .getContext("2d");
-
-
-                    ctx.drawImage(
-
-                        img,
-
-                        0,
-                        0,
-
-                        img.naturalWidth,
-
-                        img.naturalHeight
-
-                    );
-
-
-                    lastPhoto =
-                        photoCanvas;
-
-
-                    analyzeCurrentPhoto();
-
-                };
-
-
-            img.src =
-                event.target.result;
-
-        };
-
-
-    reader.readAsDataURL(
-        file
-    );
-
-}
-
-
-// =====================================================
-// NORMALIZE OCR
+// NORMALIZE TEXT
 // =====================================================
 
 function normalizeText(text) {
 
-    return text
+    return String(text || "")
 
         .toUpperCase()
 
-        .replace(
-            /[|]/g,
-            "I"
-        )
+        .replace(/[|]/g, "I")
 
-        .replace(
-            /[^A-Z0-9+&\s]/g,
-            " "
-        )
+        .replace(/[^\w+&\s]/g, " ")
 
-        .replace(
-            /\s+/g,
-            " "
-        )
+        .replace(/\s+/g, " ")
 
         .trim();
 
@@ -1399,22 +1000,20 @@ function normalizeText(text) {
 
 
 // =====================================================
-// OCR NUMBER FIX
+// OCR NUMBER CORRECTION
 // =====================================================
 
 function fixOCRNumbers(text) {
 
-    return text
-
-        .toUpperCase()
+    return normalizeText(text)
 
         .replace(
-            /\bI00\b/g,
+            /\bIOO\b/g,
             "100"
         )
 
         .replace(
-            /\bIOO\b/g,
+            /\bI00\b/g,
             "100"
         )
 
@@ -1431,11 +1030,6 @@ function fixOCRNumbers(text) {
         .replace(
             /\b1OO\b/g,
             "100"
-        )
-
-        .replace(
-            /\bIO\b/g,
-            "10"
         );
 
 }
@@ -1445,52 +1039,31 @@ function fixOCRNumbers(text) {
 // SIZE DETECTION
 // =====================================================
 
-function detectSize(text) {
+function has100ML(text) {
 
     const t =
-        fixOCRNumbers(
-            text
-        );
+        fixOCRNumbers(text);
 
 
     if (
-        /\b100\s*ML\b/i.test(t)
+        /\b100\s*ML\b/.test(t)
     ) {
 
-        return "100 ML";
+        return true;
 
     }
 
 
     if (
-        /\b100\b[\s\S]{0,10}\bML\b/i.test(t)
+        /\b100\b[\s\S]{0,12}\bML\b/.test(t)
     ) {
 
-        return "100 ML";
+        return true;
 
     }
 
 
-    const match =
-        t.match(
-            /\b(\d+(?:\.\d+)?)\s*(ML|L|G|MG)\b/i
-        );
-
-
-    if (match) {
-
-        return (
-
-            match[1] +
-            " " +
-            match[2].toUpperCase()
-
-        );
-
-    }
-
-
-    return null;
+    return false;
 
 }
 
@@ -1499,7 +1072,7 @@ function detectSize(text) {
 // LEVENSHTEIN
 // =====================================================
 
-function levenshtein(a,b) {
+function levenshtein(a, b) {
 
     const matrix = [];
 
@@ -1577,7 +1150,7 @@ function levenshtein(a,b) {
 // SIMILARITY
 // =====================================================
 
-function similarity(a,b) {
+function similarity(a, b) {
 
     a =
         normalizeText(a);
@@ -1591,10 +1164,7 @@ function similarity(a,b) {
 
 
     const distance =
-        levenshtein(
-            a,
-            b
-        );
+        levenshtein(a, b);
 
 
     const maxLength =
@@ -1621,186 +1191,548 @@ function similarity(a,b) {
 // KEYWORD SCORE
 // =====================================================
 
-function keywordScore(
-    text,
-    product
-) {
+function keywordScore(text) {
 
     const t =
-        normalizeText(
-            text
-        );
+        normalizeText(text);
 
 
     let score = 0;
 
 
-    const keywords = [
+    if (
+        t.includes("BETADINE")
+    ) {
 
-        "BETADINE",
-        "MOUTHWASH",
-        "GARGLE",
-        "POVIDONE",
-        "IODINE"
+        score += .35;
 
-    ];
+    }
 
 
-    keywords.forEach(
-        keyword => {
+    if (
+        t.includes("MOUTHWASH")
+    ) {
 
-            if (
-                t.includes(
-                    keyword
-                )
-            ) {
+        score += .25;
 
-                score +=
-                    0.16;
+    }
 
-            }
 
-        }
-    );
+    if (
+        t.includes("GARGLE")
+    ) {
+
+        score += .20;
+
+    }
+
+
+    if (
+        t.includes("POVIDONE")
+    ) {
+
+        score += .10;
+
+    }
+
+
+    if (
+        t.includes("IODINE")
+    ) {
+
+        score += .10;
+
+    }
 
 
     return Math.min(
         score,
-        0.80
+        1
     );
 
 }
 
 
 // =====================================================
-// MATCH PRODUCT
+// PRODUCT MATCH
 // =====================================================
 
-function matchProduct(
-    text
-) {
-
-    let bestProduct =
-        null;
-
-
-    let bestScore =
-        0;
-
+function matchProduct(text) {
 
     const normalized =
-        normalizeText(
-            text
-        );
+        normalizeText(text);
 
 
-    const detectedSize =
-        detectSize(
-            normalized
-        );
+    let bestAliasScore = 0;
 
 
     for (
-        const product
-        of PRODUCTS
+        const alias
+        of PRODUCT.aliases
     ) {
 
-        let aliasScore =
-            0;
-
-
-        for (
-            const alias
-            of product.aliases
-        ) {
-
-            const score =
-                similarity(
-
-                    normalized,
-
-                    alias
-
-                );
-
-
-            if (
-                score >
-                aliasScore
-            ) {
-
-                aliasScore =
-                    score;
-
-            }
-
-        }
-
-
-        const keyword =
-            keywordScore(
-
+        const score =
+            similarity(
                 normalized,
-
-                product
-
-            );
-
-
-        let score =
-
-            aliasScore * 0.55 +
-
-            keyword * 0.45;
-
-
-        if (
-            detectedSize &&
-            detectedSize ===
-            product.size
-        ) {
-
-            score +=
-                0.20;
-
-        }
-
-
-        score =
-            Math.min(
-                score,
-                1
+                alias
             );
 
 
         if (
             score >
-            bestScore
+            bestAliasScore
         ) {
 
-            bestScore =
+            bestAliasScore =
                 score;
-
-
-            bestProduct =
-                product;
 
         }
 
     }
 
 
+    const keyword =
+        keywordScore(
+            normalized
+        );
+
+
+    const sizeOK =
+        has100ML(
+            normalized
+        );
+
+
+    let score =
+
+        keyword * .60 +
+
+        bestAliasScore * .25;
+
+
+    if (sizeOK) {
+
+        score += .15;
+
+    }
+
+
     return {
 
-        product:
-            bestProduct,
-
         score:
-            bestScore,
+            Math.min(
+                score,
+                1
+            ),
 
-        detectedSize
+        sizeOK
 
     };
+
+}
+
+
+// =====================================================
+// LOAD OBJECT DETECTION MODEL
+// =====================================================
+
+async function loadDetectionModel() {
+
+    try {
+
+        setStatus(
+            "🤖 Memuat model object detection..."
+        );
+
+
+        setProgress(5);
+
+
+        detectionModel =
+            await cocoSsd.load({
+
+                base:
+                    "mobilenet_v2"
+
+            });
+
+
+        document.getElementById(
+            "modelStatus"
+        ).innerText =
+            "✅ Model object detection siap";
+
+
+        setProgress(15);
+
+
+        setStatus(
+            "✅ Siap — kamera atau upload foto"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        document.getElementById(
+            "modelStatus"
+        ).innerText =
+            "❌ Model gagal dimuat";
+
+
+        setStatus(
+            "❌ Model detection gagal"
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// START CAMERA
+// =====================================================
+
+async function startCamera() {
+
+    try {
+
+        setStatus(
+            "📷 Membuka kamera..."
+        );
+
+
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+
+            throw new Error(
+                "Browser tidak mendukung kamera."
+            );
+
+        }
+
+
+        if (stream) {
+
+            stream
+                .getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
+
+        }
+
+
+        stream =
+            await navigator
+            .mediaDevices
+            .getUserMedia({
+
+                video: {
+
+                    facingMode: {
+
+                        ideal:
+                            facingMode
+
+                    },
+
+                    width: {
+
+                        ideal: 1920
+
+                    },
+
+                    height: {
+
+                        ideal: 1080
+
+                    }
+
+                },
+
+                audio: false
+
+            });
+
+
+        video.srcObject =
+            stream;
+
+
+        await video.play();
+
+
+        btnPhoto.disabled =
+            false;
+
+
+        setStatus(
+            "✅ Kamera aktif — siap foto"
+        );
+
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        setStatus(
+
+            "❌ Kamera gagal: " +
+
+            error.name +
+
+            " — " +
+
+            error.message
+
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// SWITCH CAMERA
+// =====================================================
+
+async function switchCamera() {
+
+    facingMode =
+
+        facingMode ===
+        "environment"
+
+        ? "user"
+
+        : "environment";
+
+
+    await startCamera();
+
+}
+
+
+// =====================================================
+// TAKE PHOTO
+// =====================================================
+
+function takePhoto() {
+
+    if (
+        !video.videoWidth
+    ) {
+
+        alert(
+            "Kamera belum siap."
+        );
+
+        return;
+
+    }
+
+
+    const width =
+        video.videoWidth;
+
+
+    const height =
+        video.videoHeight;
+
+
+    photoCanvas.width =
+        width;
+
+
+    photoCanvas.height =
+        height;
+
+
+    const ctx =
+        photoCanvas
+        .getContext("2d");
+
+
+    ctx.drawImage(
+
+        video,
+
+        0,
+        0,
+        width,
+        height
+
+    );
+
+
+    lastPhoto =
+        photoCanvas;
+
+
+    analyzeImage(
+        lastPhoto
+    );
+
+}
+
+
+// =====================================================
+// UPLOAD PHOTO
+// =====================================================
+
+fileInput.addEventListener(
+    "change",
+    function(event) {
+
+        const file =
+            event.target.files[0];
+
+
+        if (!file)
+            return;
+
+
+        const image =
+            new Image();
+
+
+        image.onload =
+            function() {
+
+                const maxWidth =
+                    1600;
+
+
+                let width =
+                    image.naturalWidth;
+
+
+                let height =
+                    image.naturalHeight;
+
+
+                if (
+                    width >
+                    maxWidth
+                ) {
+
+                    const ratio =
+                        maxWidth /
+                        width;
+
+
+                    width =
+                        maxWidth;
+
+
+                    height =
+                        Math.round(
+                            height *
+                            ratio
+                        );
+
+                }
+
+
+                photoCanvas.width =
+                    width;
+
+
+                photoCanvas.height =
+                    height;
+
+
+                const ctx =
+                    photoCanvas
+                    .getContext(
+                        "2d"
+                    );
+
+
+                ctx.drawImage(
+
+                    image,
+
+                    0,
+                    0,
+
+                    width,
+                    height
+
+                );
+
+
+                lastPhoto =
+                    photoCanvas;
+
+
+                analyzeImage(
+                    lastPhoto
+                );
+
+            };
+
+
+        image.onerror =
+            function() {
+
+                setStatus(
+                    "❌ Foto tidak dapat dibaca."
+                );
+
+            };
+
+
+        image.src =
+            URL.createObjectURL(
+                file
+            );
+
+    }
+);
+
+
+// =====================================================
+// CREATE OCR WORKER
+// =====================================================
+
+async function getOCRWorker() {
+
+    if (ocrWorker) {
+
+        return ocrWorker;
+
+    }
+
+
+    ocrWorker =
+        await Tesseract.createWorker(
+            "eng"
+        );
+
+
+    await ocrWorker.setParameters({
+
+        tessedit_pageseg_mode:
+            "11",
+
+        preserve_interword_spaces:
+            "1"
+
+    });
+
+
+    return ocrWorker;
 
 }
 
@@ -1809,255 +1741,78 @@ function matchProduct(
 // OCR
 // =====================================================
 
-async function runOCR() {
+async function runOCR(source) {
 
     const worker =
-        await Tesseract.createWorker(
-            "eng"
-        );
+        await getOCRWorker();
 
 
-    try {
-
-        await worker.setParameters({
-
-            tessedit_pageseg_mode:
-                "11",
-
-            preserve_interword_spaces:
-                "1"
-
-        });
-
-
-        const result =
-            await worker.recognize(
-                lastPhoto
-            );
-
-
-        return (
-            result.data.text ||
-            ""
-        );
-
-    }
-
-    finally {
-
-        await worker.terminate();
-
-    }
-
-}
-
-
-// =====================================================
-// OBJECT DETECTION
-// =====================================================
-
-async function detectBottles(
-    source
-) {
-
-    if (
-        !modelReady ||
-        !detectionModel
-    ) {
-
-        throw new Error(
-            "Model object detection belum siap."
-        );
-
-    }
-
-
-    const predictions =
-        await detectionModel.detect(
+    const result =
+        await worker.recognize(
             source
         );
 
 
-    console.log(
-        "Semua detection:",
-        predictions
-    );
+    return {
 
+        text:
+            result.data.text || "",
 
-    /*
-       COCO SSD mengenali beberapa kelas.
-       Kita hanya mengambil "bottle".
-    */
+        confidence:
+            result.data.confidence || 0
 
-    let bottles =
-        predictions.filter(
-            item =>
-
-                item.class ===
-                "bottle" &&
-
-                item.score >=
-                0.20
-
-        );
-
-
-    /*
-       Hilangkan box yang terlalu kecil.
-       Ini mencegah benda kecil/aneh dianggap botol.
-    */
-
-    const imageWidth =
-        source.width;
-
-
-    const imageHeight =
-        source.height;
-
-
-    bottles =
-        bottles.filter(
-            item => {
-
-                const [
-                    x,
-                    y,
-                    width,
-                    height
-                ] = item.bbox;
-
-
-                const area =
-                    width *
-                    height;
-
-
-                const imageArea =
-                    imageWidth *
-                    imageHeight;
-
-
-                const areaRatio =
-                    area /
-                    imageArea;
-
-
-                if (
-                    areaRatio <
-                    0.015
-                ) {
-
-                    return false;
-
-                }
-
-
-                /*
-                   Botol pada umumnya
-                   memiliki tinggi lebih besar
-                   daripada lebar.
-
-                   Tetapi kita beri toleransi.
-                */
-
-                const ratio =
-                    height /
-                    Math.max(
-                        width,
-                        1
-                    );
-
-
-                if (
-                    ratio < 0.75
-                ) {
-
-                    return false;
-
-                }
-
-
-                return true;
-
-            }
-
-        );
-
-
-    /*
-       Non-Maximum Suppression sederhana.
-       Kalau dua bounding box sangat tumpang tindih,
-       simpan yang confidence-nya lebih tinggi.
-    */
-
-    bottles =
-        nonMaximumSuppression(
-            bottles,
-            0.45
-        );
-
-
-    return bottles;
+    };
 
 }
 
 
 // =====================================================
-// IOU
+// CALCULATE IOU
 // =====================================================
 
-function calculateIoU(
-    boxA,
-    boxB
-) {
+function calculateIoU(a, b) {
 
-    const [
+    const ax1 =
+        a.bbox[0];
 
-        ax,
-        ay,
-        aw,
-        ah
-
-    ] = boxA.bbox;
-
-
-    const [
-
-        bx,
-        by,
-        bw,
-        bh
-
-    ] = boxB.bbox;
-
+    const ay1 =
+        a.bbox[1];
 
     const ax2 =
-        ax + aw;
-
+        a.bbox[0] +
+        a.bbox[2];
 
     const ay2 =
-        ay + ah;
+        a.bbox[1] +
+        a.bbox[3];
 
+
+    const bx1 =
+        b.bbox[0];
+
+    const by1 =
+        b.bbox[1];
 
     const bx2 =
-        bx + bw;
-
+        b.bbox[0] +
+        b.bbox[2];
 
     const by2 =
-        by + bh;
+        b.bbox[1] +
+        b.bbox[3];
 
 
     const x1 =
         Math.max(
-            ax,
-            bx
+            ax1,
+            bx1
         );
 
 
     const y1 =
         Math.max(
-            ay,
-            by
+            ay1,
+            by1
         );
 
 
@@ -2087,11 +1842,13 @@ function calculateIoU(
 
 
     const areaA =
-        aw * ah;
+        a.bbox[2] *
+        a.bbox[3];
 
 
     const areaB =
-        bw * bh;
+        b.bbox[2] *
+        b.bbox[3];
 
 
     const union =
@@ -2118,70 +1875,67 @@ function calculateIoU(
 
 
 // =====================================================
-// NMS
+// REMOVE DUPLICATE DETECTIONS
 // =====================================================
 
-function nonMaximumSuppression(
-    boxes,
-    threshold
+function removeDuplicateDetections(
+    detections
 ) {
 
     const sorted =
-        [...boxes].sort(
-
-            (a,b) =>
+        [...detections]
+        .sort(
+            (a, b) =>
                 b.score -
                 a.score
-
         );
 
 
     const result = [];
 
 
-    while (
-        sorted.length
+    for (
+        const detection
+        of sorted
     ) {
 
-        const current =
-            sorted.shift();
-
-
-        result.push(
-            current
-        );
+        let duplicate =
+            false;
 
 
         for (
-            let i =
-                sorted.length - 1;
-
-            i >= 0;
-
-            i--
+            const existing
+            of result
         ) {
 
-            const overlap =
+            const iou =
                 calculateIoU(
-
-                    current,
-
-                    sorted[i]
-
+                    detection,
+                    existing
                 );
 
 
             if (
-                overlap >
-                threshold
+                iou >= 0.35
             ) {
 
-                sorted.splice(
-                    i,
-                    1
-                );
+                duplicate =
+                    true;
+
+                break;
 
             }
+
+        }
+
+
+        if (
+            !duplicate
+        ) {
+
+            result.push(
+                detection
+            );
 
         }
 
@@ -2194,28 +1948,217 @@ function nonMaximumSuppression(
 
 
 // =====================================================
+// OBJECT DETECTION
+// =====================================================
+
+async function detectBottles(
+    source
+) {
+
+    if (
+        !detectionModel
+    ) {
+
+        await loadDetectionModel();
+
+    }
+
+
+    setStatus(
+        "🔎 Mendeteksi objek..."
+    );
+
+
+    setProgress(60);
+
+
+    const predictions =
+        await detectionModel.detect(
+            source
+        );
+
+
+    console.log(
+        "RAW DETECTIONS:",
+        predictions
+    );
+
+
+    const imageWidth =
+        source.width;
+
+
+    const imageHeight =
+        source.height;
+
+
+    const imageArea =
+        imageWidth *
+        imageHeight;
+
+
+    // ================================================
+    // FILTER BOTTLE
+    // ================================================
+
+    let bottles =
+        predictions.filter(
+            item => {
+
+                if (
+                    item.class !==
+                    "bottle"
+                ) {
+
+                    return false;
+
+                }
+
+
+                // Confidence sengaja
+                // tidak terlalu tinggi
+                // supaya botol lebih mudah
+                // tertangkap.
+
+                if (
+                    item.score <
+                    0.15
+                ) {
+
+                    return false;
+
+                }
+
+
+                const width =
+                    item.bbox[2];
+
+
+                const height =
+                    item.bbox[3];
+
+
+                const area =
+                    width *
+                    height;
+
+
+                const areaRatio =
+                    area /
+                    imageArea;
+
+
+                // Benda terlalu kecil
+                // biasanya noise.
+
+                if (
+                    areaRatio <
+                    0.015
+                ) {
+
+                    return false;
+
+                }
+
+
+                // Bounding box yang
+                // hampir satu gambar
+                // biasanya false positive.
+
+                if (
+                    areaRatio >
+                    0.85
+                ) {
+
+                    return false;
+
+                }
+
+
+                // Bentuk bottle biasanya
+                // tidak sangat horizontal.
+
+                const ratio =
+                    height /
+                    Math.max(
+                        width,
+                        1
+                    );
+
+
+                if (
+                    ratio <
+                    0.55
+                ) {
+
+                    return false;
+
+                }
+
+
+                return true;
+
+            }
+        );
+
+
+    // ================================================
+    // REMOVE DUPLICATE
+    // ================================================
+
+    bottles =
+        removeDuplicateDetections(
+            bottles
+        );
+
+
+    // ================================================
+    // SORT LEFT TO RIGHT
+    // ================================================
+
+    bottles.sort(
+
+        (a, b) =>
+            a.bbox[0] -
+            b.bbox[0]
+
+    );
+
+
+    return {
+
+        predictions,
+
+        bottles
+
+    };
+
+}
+
+
+// =====================================================
 // DRAW DETECTIONS
 // =====================================================
 
 function drawDetections(
     source,
-    detections
+    bottles
 ) {
 
-    const output =
+    const canvas =
         resultCanvas;
 
 
-    output.width =
+    canvas.width =
         source.width;
 
 
-    output.height =
+    canvas.height =
         source.height;
 
 
     const ctx =
-        output.getContext(
+        canvas.getContext(
             "2d"
         );
 
@@ -2224,8 +2167,8 @@ function drawDetections(
 
         0,
         0,
-        output.width,
-        output.height
+        canvas.width,
+        canvas.height
 
     );
 
@@ -2243,30 +2186,37 @@ function drawDetections(
     ctx.lineWidth =
         Math.max(
             4,
-            source.width / 350
+            canvas.width / 400
         );
 
 
     ctx.font =
+        "bold " +
         Math.max(
-            22,
-            source.width / 32
+            20,
+            canvas.width / 35
         ) +
         "px Arial";
 
 
-    detections.forEach(
+    bottles.forEach(
 
-        (item,index) => {
+        (item, index) => {
 
-            const [
+            const x =
+                item.bbox[0];
 
-                x,
-                y,
-                width,
-                height
 
-            ] = item.bbox;
+            const y =
+                item.bbox[1];
+
+
+            const width =
+                item.bbox[2];
+
+
+            const height =
+                item.bbox[3];
 
 
             ctx.strokeStyle =
@@ -2285,11 +2235,12 @@ function drawDetections(
 
             const label =
 
-                "PRODUK " +
+                "UNIT " +
                 (index + 1) +
                 "  " +
                 Math.round(
-                    item.score * 100
+                    item.score *
+                    100
                 ) +
                 "%";
 
@@ -2298,6 +2249,13 @@ function drawDetections(
                 ctx.measureText(
                     label
                 ).width;
+
+
+            const labelHeight =
+                Math.max(
+                    30,
+                    canvas.width / 30
+                );
 
 
             ctx.fillStyle =
@@ -2310,12 +2268,12 @@ function drawDetections(
 
                 Math.max(
                     0,
-                    y - 35
+                    y - labelHeight
                 ),
 
                 textWidth + 15,
 
-                35
+                labelHeight
 
             );
 
@@ -2331,8 +2289,8 @@ function drawDetections(
                 x + 7,
 
                 Math.max(
-                    25,
-                    y - 10
+                    22,
+                    y - 8
                 )
 
             );
@@ -2342,89 +2300,84 @@ function drawDetections(
     );
 
 
-    output.style.display =
+    canvas.style.display =
         "block";
 
 }
 
 
 // =====================================================
-// SANITY CHECK COUNT
+// SHOW DETECTION LIST
 // =====================================================
 
-function validateCount(
-    count,
-    source
+function showDetectionList(
+    bottles
 ) {
 
-    /*
-       Untuk menghindari kasus seperti:
-
-       1 botol -> 14
-
-       Kita tidak langsung percaya hasil
-       object detection jika terlalu banyak.
-
-       Batas aman relatif terhadap ukuran foto.
-    */
+    const container =
+        document.getElementById(
+            "detectionList"
+        );
 
 
-    const imageArea =
-        source.width *
-        source.height;
+    container.innerHTML =
+        "";
 
 
     if (
-        count <= 0
+        bottles.length === 0
     ) {
 
-        return {
+        container.innerHTML =
 
-            count: 0,
+            "<div class='detection-item'>" +
 
-            valid: false,
+            "❌ Tidak ada botol yang " +
+            "terdeteksi." +
 
-            reason:
-                "Tidak ada botol yang terdeteksi."
+            "</div>";
 
-        };
+        return;
 
     }
 
 
-    /*
-       Untuk satu foto produk yang jelas,
-       angka ekstrem dianggap mencurigakan.
-    */
+    bottles.forEach(
 
-    if (
-        count > 10
-    ) {
+        (item, index) => {
 
-        return {
-
-            count: 0,
-
-            valid: false,
-
-            reason:
-                "Terlalu banyak deteksi. Hasil ditolak agar tidak menghitung bagian gambar sebagai produk."
-
-        };
-
-    }
+            const div =
+                document.createElement(
+                    "div"
+                );
 
 
-    return {
+            div.className =
+                "detection-item";
 
-        count,
 
-        valid: true,
+            div.innerText =
 
-        reason:
-            "Hasil object detection valid."
+                "UNIT " +
+                (index + 1) +
 
-    };
+                " — bottle — " +
+
+                Math.round(
+                    item.score *
+                    100
+                ) +
+
+                "% confidence";
+
+
+            container.appendChild(
+                div
+            );
+
+        }
+
+    );
 
 }
 
@@ -2433,63 +2386,138 @@ function validateCount(
 // MAIN ANALYSIS
 // =====================================================
 
-async function analyzeCurrentPhoto() {
+async function analyzeImage(
+    source
+) {
 
-    if (
-        isAnalyzing
-    ) {
-
-        return;
-
-    }
-
-
-    if (!lastPhoto) {
-
-        return;
-
-    }
+    const productEl =
+        document.getElementById(
+            "product"
+        );
 
 
-    isAnalyzing =
-        true;
+    const codeEl =
+        document.getElementById(
+            "code"
+        );
 
 
-    resetResultOnly();
+    const sizeEl =
+        document.getElementById(
+            "size"
+        );
+
+
+    const confidenceEl =
+        document.getElementById(
+            "confidence"
+        );
+
+
+    const ocrEl =
+        document.getElementById(
+            "ocrText"
+        );
+
+
+    const countEl =
+        document.getElementById(
+            "count"
+        );
+
+
+    const countStatusEl =
+        document.getElementById(
+            "countStatus"
+        );
+
+
+    // ================================================
+    // RESET
+    // ================================================
+
+    productEl.innerText =
+        "Menganalisis...";
+
+
+    codeEl.innerText =
+        "-";
+
+
+    sizeEl.innerText =
+        "-";
+
+
+    confidenceEl.innerText =
+        "-";
+
+
+    countEl.innerText =
+        "-";
+
+
+    countStatusEl.innerText =
+        "Menganalisis...";
+
+
+    countStatusEl.className =
+        "value";
+
+
+    resultCanvas.style.display =
+        "none";
+
+
+    document.getElementById(
+        "detectionList"
+    ).innerHTML =
+        "";
 
 
     try {
 
-        // =================================================
-        // STEP 1
-        // =================================================
+        // ============================================
+        // OCR
+        // ============================================
 
-        setProgress(10);
+        setProgress(25);
+
 
         setStatus(
-            "🔤 Membaca nama produk dengan OCR..."
+            "🔤 Membaca nama produk..."
         );
 
 
+        const ocr =
+            await runOCR(
+                source
+            );
+
+
         const ocrText =
-            await runOCR();
+            ocr.text;
 
 
-        document.getElementById(
-            "ocrText"
-        ).innerText =
+        ocrEl.innerText =
             ocrText ||
             "Tidak ada teks terbaca.";
 
 
-        // =================================================
-        // STEP 2
-        // =================================================
+        console.log(
+            "OCR:",
+            ocrText
+        );
 
-        setProgress(35);
+
+        // ============================================
+        // PRODUCT MATCH
+        // ============================================
+
+        setProgress(45);
+
 
         setStatus(
-            "🧠 Mengenali produk..."
+            "🧠 Mengidentifikasi produk..."
         );
 
 
@@ -2499,47 +2527,78 @@ async function analyzeCurrentPhoto() {
             );
 
 
-        const confidence =
+        const ocrPercent =
             Math.round(
-                match.score * 100
+                ocr.confidence
             );
 
 
-        const productEl =
-            document.getElementById(
-                "product"
+        const matchPercent =
+            Math.round(
+                match.score *
+                100
             );
 
 
-        const codeEl =
-            document.getElementById(
-                "code"
-            );
-
-
-        const sizeEl =
-            document.getElementById(
-                "size"
-            );
-
-
-        const confidenceEl =
-            document.getElementById(
-                "confidence"
-            );
-
+        // ============================================
+        // PRODUCT RESULT
+        // ============================================
 
         if (
-            !match.product ||
-            match.score < 0.25
+            match.score >= 0.35
         ) {
 
             productEl.innerText =
-                "❌ Produk belum dikenali";
+                PRODUCT.fullName;
 
 
             productEl.className =
-                "value danger";
+                "value success";
+
+
+            codeEl.innerText =
+                PRODUCT.code;
+
+
+            if (
+                match.sizeOK
+            ) {
+
+                sizeEl.innerText =
+                    PRODUCT.size;
+
+            }
+
+            else {
+
+                sizeEl.innerText =
+                    "100 ML — ukuran " +
+                    "belum terbaca jelas";
+
+            }
+
+
+            confidenceEl.innerText =
+
+                matchPercent +
+                "% match / OCR " +
+                ocrPercent +
+                "%";
+
+
+            confidenceEl.className =
+                "value success";
+
+        }
+
+        else {
+
+            productEl.innerText =
+                "⚠️ Produk belum cukup jelas";
+
+
+            productEl.className =
+                "value warning";
 
 
             codeEl.innerText =
@@ -2547,196 +2606,137 @@ async function analyzeCurrentPhoto() {
 
 
             sizeEl.innerText =
-                match.detectedSize ||
                 "-";
 
 
             confidenceEl.innerText =
-                confidence +
+
+                matchPercent +
+                "% match / OCR " +
+                ocrPercent +
                 "%";
 
 
             confidenceEl.className =
-                "value danger";
-
-
-            setProgress(100);
-
-
-            setStatus(
-                "⚠️ Produk belum cukup jelas. Coba foto lebih dekat."
-            );
-
-
-            isAnalyzing =
-                false;
-
-
-            return;
+                "value warning";
 
         }
 
 
-        productEl.innerText =
-            match.product.name;
+        // ============================================
+        // OBJECT DETECTION
+        // ============================================
+
+        setProgress(60);
 
 
-        productEl.className =
-            "value success";
+        const detection =
+            await detectBottles(
+                source
+            );
 
 
-        codeEl.innerText =
-            match.product.code;
+        const bottles =
+            detection.bottles;
 
 
-        sizeEl.innerText =
-            match.detectedSize ||
-            match.product.size;
+        // ============================================
+        // DRAW
+        // ============================================
 
-
-        confidenceEl.innerText =
-            confidence +
-            "%";
-
-
-        confidenceEl.className =
-            confidence >= 60
-                ? "value success"
-                : "value warning";
-
-
-        // =================================================
-        // STEP 3
-        // =================================================
-
-        setProgress(55);
-
-        setStatus(
-            "🤖 Mendeteksi botol dengan AI..."
+        drawDetections(
+            source,
+            bottles
         );
 
 
-        if (!modelReady) {
-
-            throw new Error(
-                "Model AI belum siap."
-            );
-
-        }
+        showDetectionList(
+            bottles
+        );
 
 
-        const detections =
-            await detectBottles(
-                lastPhoto
-            );
+        // ============================================
+        // COUNT
+        // ============================================
+
+        const count =
+            bottles.length;
 
 
-        // =================================================
-        // STEP 4
-        // =================================================
-
-        setProgress(80);
-
-
-        const validation =
-            validateCount(
-
-                detections.length,
-
-                lastPhoto
-
-            );
-
-
-        const countEl =
-            document.getElementById(
-                "count"
-            );
-
-
-        const countStatusEl =
-            document.getElementById(
-                "countStatus"
-            );
-
-
-        const detectionInfo =
-            document.getElementById(
-                "detectionInfo"
-            );
+        countEl.innerText =
+            count;
 
 
         if (
-            !validation.valid
+            count === 1
         ) {
 
-            countEl.innerText =
-                "?";
-
-
             countStatusEl.innerText =
-                "⚠️ " +
-                validation.reason;
-
-
-            countStatusEl.className =
-                "value warning";
-
-
-            detectionInfo.innerText =
-                validation.reason;
-
-
-            resultCanvas.style.display =
-                "none";
-
-        }
-
-        else {
-
-            countEl.innerText =
-                validation.count;
-
-
-            countStatusEl.innerText =
-
-                "✅ " +
-                validation.count +
-                " produk terdeteksi";
+                "✅ 1 unit terdeteksi";
 
 
             countStatusEl.className =
                 "value success";
 
+        }
 
-            detectionInfo.innerText =
+        else if (
+            count > 1
+        ) {
 
-                "AI mendeteksi " +
-                validation.count +
-                " objek botol. " +
-                "Bounding box hanya berasal dari object detection, bukan contour.";
+            countStatusEl.innerText =
+
+                "✅ " +
+                count +
+                " unit terdeteksi";
 
 
-            drawDetections(
+            countStatusEl.className =
+                "value success";
 
-                lastPhoto,
+        }
 
-                detections
+        else {
 
-            );
+            countStatusEl.innerText =
+
+                "⚠️ Tidak ada bottle " +
+                "yang terdeteksi";
+
+
+            countStatusEl.className =
+                "value warning";
 
         }
 
 
-        // =================================================
+        // ============================================
         // FINISH
-        // =================================================
+        // ============================================
 
         setProgress(100);
 
-        setStatus(
-            "✅ Analisis selesai"
-        );
+
+        if (
+            count > 0
+        ) {
+
+            setStatus(
+                "✅ Analisis selesai"
+            );
+
+        }
+
+        else {
+
+            setStatus(
+
+                "⚠️ OCR selesai, " +
+                "tetapi objek belum terdeteksi"
+
+            );
+
+        }
 
     }
 
@@ -2758,42 +2758,32 @@ async function analyzeCurrentPhoto() {
         );
 
 
-        document.getElementById(
-            "count"
-        ).innerText =
-            "?";
+        countEl.innerText =
+            "-";
 
 
-        document.getElementById(
-            "countStatus"
-        ).innerText =
-            "Gagal melakukan counting";
+        countStatusEl.innerText =
+            "Gagal menghitung";
 
 
-        document.getElementById(
-            "countStatus"
-        ).className =
+        countStatusEl.className =
             "value danger";
 
     }
-
-
-    isAnalyzing =
-        false;
 
 }
 
 
 // =====================================================
-// RESET RESULT
+// RESET
 // =====================================================
 
-function resetResultOnly() {
+function resetScan() {
 
     document.getElementById(
         "product"
     ).innerText =
-        "Menganalisis...";
+        "Belum dianalisis";
 
 
     document.getElementById(
@@ -2829,7 +2819,7 @@ function resetResultOnly() {
     document.getElementById(
         "countStatus"
     ).innerText =
-        "Menunggu...";
+        "Belum dihitung";
 
 
     document.getElementById(
@@ -2839,46 +2829,19 @@ function resetResultOnly() {
 
 
     document.getElementById(
-        "detectionInfo"
-    ).innerText =
-        "Sedang melakukan object detection...";
-
-
-    resultCanvas.style.display =
-        "none";
-
-}
-
-
-// =====================================================
-// RESET
-// =====================================================
-
-function resetScan() {
-
-    resetResultOnly();
-
-
-    document.getElementById(
-        "product"
-    ).innerText =
-        "Belum dianalisis";
-
-
-    document.getElementById(
         "ocrText"
     ).innerText =
         "Belum ada hasil OCR.";
 
 
     document.getElementById(
-        "fileName"
-    ).innerText =
-        "Belum ada foto dipilih";
-
-
-    fileInput.value =
+        "detectionList"
+    ).innerHTML =
         "";
+
+
+    resultCanvas.style.display =
+        "none";
 
 
     setProgress(0);
@@ -2895,7 +2858,7 @@ function resetScan() {
     else {
 
         setStatus(
-            "Siap digunakan"
+            "Siap — buka kamera atau upload foto"
         );
 
     }
@@ -2904,14 +2867,26 @@ function resetScan() {
 
 
 // =====================================================
+// PAGE LOAD
+// =====================================================
+
+window.addEventListener(
+    "load",
+    async function() {
+
+        await loadDetectionModel();
+
+    }
+);
+
+
+// =====================================================
 // STOP CAMERA
 // =====================================================
 
 window.addEventListener(
-
     "beforeunload",
-
-    () => {
+    async function() {
 
         if (stream) {
 
@@ -2924,25 +2899,24 @@ window.addEventListener(
 
         }
 
+
+        if (ocrWorker) {
+
+            try {
+
+                await ocrWorker.terminate();
+
+            }
+
+            catch (e) {
+
+                console.log(e);
+
+            }
+
+        }
+
     }
-
-);
-
-
-// =====================================================
-// START
-// =====================================================
-
-window.addEventListener(
-
-    "load",
-
-    () => {
-
-        loadDetectionModel();
-
-    }
-
 );
 
 </script>
