@@ -57,7 +57,9 @@
       display: block;
     }
 
-    canvas { display: none; }
+    canvas {
+      display: none;
+    }
 
     .camera-guide {
       position: absolute;
@@ -91,8 +93,14 @@
       color: #fff;
     }
 
-    button.secondary { background: #475467; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.secondary {
+      background: #475467;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
 
     .status {
       margin-top: 12px;
@@ -141,8 +149,13 @@
     }
 
     @media (min-width: 700px) {
-      .container { padding: 28px; }
-      .card { padding: 24px; }
+      .container {
+        padding: 28px;
+      }
+
+      .card {
+        padding: 24px;
+      }
     }
   </style>
 </head>
@@ -150,165 +163,1018 @@
 <body>
   <main class="container">
     <section class="card">
+
       <h1>📷 Scan Produk</h1>
-      <p class="subtitle">Kamera live untuk Android, iPhone/iPad, dan desktop.</p>
+
+      <p class="subtitle">
+        Kamera live untuk Android, iPhone/iPad, dan desktop.
+      </p>
 
       <div class="camera-wrap">
-        <video id="camera" autoplay playsinline muted></video>
+
+        <video
+          id="camera"
+          autoplay
+          playsinline
+          muted>
+        </video>
+
         <canvas id="canvas"></canvas>
-        <div class="camera-label" id="cameraLabel">KAMERA BELUM AKTIF</div>
+
+        <div
+          class="camera-label"
+          id="cameraLabel">
+          KAMERA BELUM AKTIF
+        </div>
+
         <div class="camera-guide"></div>
+
       </div>
 
-      <button id="startBtn" onclick="startCamera()">📷 BUKA KAMERA</button>
-      <button id="captureBtn" onclick="capturePhoto()" disabled>📸 AMBIL FOTO</button>
-      <button class="secondary" id="switchBtn" onclick="switchCamera()" disabled>🔄 GANTI KAMERA</button>
+      <button
+        id="startBtn"
+        onclick="startCamera()">
+        📷 BUKA KAMERA
+      </button>
 
-      <div class="status" id="status">Status: siap</div>
+      <button
+        id="captureBtn"
+        onclick="capturePhoto()"
+        disabled>
+        📸 AMBIL FOTO
+      </button>
+
+      <button
+        class="secondary"
+        id="switchBtn"
+        onclick="switchCamera()"
+        disabled>
+        🔄 GANTI KAMERA
+      </button>
+
+      <div
+        class="status"
+        id="status">
+        Status: siap
+      </div>
 
       <div class="result">
-        <div class="label">Produk terdeteksi</div>
-        <div class="product" id="product">-</div>
+
+        <div class="label">
+          Produk terdeteksi
+        </div>
+
+        <div
+          class="product"
+          id="product">
+          -
+        </div>
 
         <hr>
 
-        <div class="label">Jumlah botol terdeteksi</div>
-        <div class="count" id="count">0</div>
+        <div class="label">
+          Jumlah botol terdeteksi
+        </div>
 
-        <div class="label">Teks OCR</div>
-        <div class="ocr" id="ocr">-</div>
+        <div
+          class="count"
+          id="count">
+          0
+        </div>
+
+        <div class="label">
+          Kecocokan OCR
+        </div>
+
+        <div
+          class="ocr"
+          id="match">
+          -
+        </div>
+
+        <div class="label">
+          Teks OCR
+        </div>
+
+        <div
+          class="ocr"
+          id="ocr">
+          -
+        </div>
+
       </div>
 
       <div class="note">
-        Tahap prototype ini memakai OCR untuk membaca label. Penghitungan botol masih
-        tahap berikutnya; OCR saja tidak dapat menghitung jumlah botol.
-        Kamera live memerlukan HTTPS dan izin kamera dari browser.
+
+        Prototype ini menggunakan OCR untuk membaca tulisan
+        pada kemasan.
+
+        <br><br>
+
+        OCR tidak harus membaca tulisan 100% sempurna.
+        Sistem menggunakan kombinasi nama produk, kata kunci,
+        ukuran dan fuzzy matching.
+
+        <br><br>
+
+        Penghitungan jumlah botol masih tahap berikutnya.
+        OCR saja tidak dapat menghitung jumlah botol.
+
+        <br><br>
+
+        Kamera live memerlukan HTTPS dan izin kamera
+        dari browser.
+
       </div>
+
     </section>
   </main>
 
+
 <script>
+
+  /* =========================================================
+     CAMERA
+  ========================================================= */
+
   let stream = null;
+
   let currentFacingMode = "environment";
 
-  const video = document.getElementById("camera");
-  const canvas = document.getElementById("canvas");
-  const statusEl = document.getElementById("status");
-  const productEl = document.getElementById("product");
-  const countEl = document.getElementById("count");
-  const ocrEl = document.getElementById("ocr");
-  const cameraLabel = document.getElementById("cameraLabel");
-  const captureBtn = document.getElementById("captureBtn");
-  const switchBtn = document.getElementById("switchBtn");
+
+  const video =
+    document.getElementById("camera");
+
+  const canvas =
+    document.getElementById("canvas");
+
+  const statusEl =
+    document.getElementById("status");
+
+  const productEl =
+    document.getElementById("product");
+
+  const countEl =
+    document.getElementById("count");
+
+  const ocrEl =
+    document.getElementById("ocr");
+
+  const matchEl =
+    document.getElementById("match");
+
+  const cameraLabel =
+    document.getElementById("cameraLabel");
+
+  const captureBtn =
+    document.getElementById("captureBtn");
+
+  const switchBtn =
+    document.getElementById("switchBtn");
+
 
   function setStatus(text) {
+
     statusEl.textContent = text;
+
   }
 
+
   async function startCamera() {
+
     try {
+
       if (!window.isSecureContext) {
-        throw new Error("Halaman kamera harus dibuka melalui HTTPS.");
+
+        throw new Error(
+          "Halaman kamera harus dibuka melalui HTTPS."
+        );
+
       }
 
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Browser/perangkat ini tidak mendukung kamera live.");
+
+      if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+      ) {
+
+        throw new Error(
+          "Browser/perangkat ini tidak mendukung kamera live."
+        );
+
       }
+
 
       stopCamera();
 
-      setStatus("Meminta izin kamera...");
-      cameraLabel.textContent = "MEMBUKA KAMERA";
 
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: currentFacingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      });
+      setStatus(
+        "Meminta izin kamera..."
+      );
 
-      video.srcObject = stream;
+      cameraLabel.textContent =
+        "MEMBUKA KAMERA";
+
+
+      stream =
+        await navigator.mediaDevices.getUserMedia({
+
+          video: {
+
+            facingMode: {
+              ideal: currentFacingMode
+            },
+
+            width: {
+              ideal: 1280
+            },
+
+            height: {
+              ideal: 720
+            }
+
+          },
+
+          audio: false
+
+        });
+
+
+      video.srcObject =
+        stream;
+
+
       await video.play();
 
-      captureBtn.disabled = false;
-      switchBtn.disabled = false;
-      cameraLabel.textContent =
-        currentFacingMode === "environment" ? "KAMERA BELAKANG" : "KAMERA DEPAN";
 
-      setStatus("✅ Kamera aktif. Arahkan ke produk lalu tekan AMBIL FOTO.");
+      captureBtn.disabled =
+        false;
+
+      switchBtn.disabled =
+        false;
+
+
+      cameraLabel.textContent =
+        currentFacingMode === "environment"
+          ? "KAMERA BELAKANG"
+          : "KAMERA DEPAN";
+
+
+      setStatus(
+        "✅ Kamera aktif. Arahkan ke produk lalu tekan AMBIL FOTO."
+      );
+
+
     } catch (error) {
+
       console.error(error);
-      setStatus("❌ Kamera gagal dibuka: " + error.name + " - " + error.message);
-      cameraLabel.textContent = "KAMERA TIDAK AKTIF";
+
+      setStatus(
+        "❌ Kamera gagal dibuka: " +
+        error.name +
+        " - " +
+        error.message
+      );
+
+      cameraLabel.textContent =
+        "KAMERA TIDAK AKTIF";
+
     }
+
   }
+
 
   function stopCamera() {
+
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+
+      stream
+        .getTracks()
+        .forEach(
+          track => track.stop()
+        );
+
       stream = null;
+
     }
-    captureBtn.disabled = true;
+
+
+    captureBtn.disabled =
+      true;
+
   }
+
 
   async function switchCamera() {
+
     currentFacingMode =
-      currentFacingMode === "environment" ? "user" : "environment";
+      currentFacingMode === "environment"
+        ? "user"
+        : "environment";
+
     await startCamera();
+
   }
+
+
+  /* =========================================================
+     CAPTURE + OCR
+  ========================================================= */
 
   async function capturePhoto() {
-    if (!stream || video.readyState < 2) {
-      setStatus("Kamera belum siap.");
+
+    if (
+      !stream ||
+      video.readyState < 2
+    ) {
+
+      setStatus(
+        "Kamera belum siap."
+      );
+
       return;
+
     }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.width =
+      video.videoWidth;
 
-    setStatus("📖 Foto diambil. Sedang membaca label...");
-    productEl.textContent = "Membaca...";
-    ocrEl.textContent = "Membaca...";
-    countEl.textContent = "...";
+    canvas.height =
+      video.videoHeight;
+
+
+    const ctx =
+      canvas.getContext("2d");
+
+
+    ctx.drawImage(
+      video,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    setStatus(
+      "📖 Foto diambil. Sedang membaca label..."
+    );
+
+
+    productEl.textContent =
+      "Membaca...";
+
+    ocrEl.textContent =
+      "Membaca...";
+
+    countEl.textContent =
+      "...";
+
 
     try {
-      const result = await Tesseract.recognize(canvas, "eng");
-      const text = (result.data.text || "").replace(/\s+/g, " ").trim();
 
-      ocrEl.textContent = text || "Tidak terbaca";
+      const result =
+        await Tesseract.recognize(
+          canvas,
+          "eng"
+        );
+
+
+      const text =
+        (
+          result.data.text || ""
+        )
+        .replace(/\s+/g, " ")
+        .trim();
+
+
+      ocrEl.textContent =
+        text ||
+        "Tidak terbaca";
+
+
+      matchEl.textContent =
+        "Menganalisis kecocokan...";
+
+
       detectProduct(text);
 
-      // Placeholder sampai object detection khusus botol ditambahkan.
-      countEl.textContent = "Belum dihitung";
-      setStatus("✅ OCR selesai.");
+
+      /*
+        BELUM ADA OBJECT DETECTION.
+
+        Jadi jumlah botol belum dihitung
+        dari kamera.
+      */
+
+      countEl.textContent =
+        "Belum dihitung";
+
+
     } catch (error) {
+
       console.error(error);
-      setStatus("❌ OCR gagal: " + error.message);
-      productEl.textContent = "Gagal membaca";
-      countEl.textContent = "0";
-      ocrEl.textContent = "-";
+
+
+      setStatus(
+        "❌ OCR gagal: " +
+        error.message
+      );
+
+
+      productEl.textContent =
+        "Gagal membaca";
+
+      countEl.textContent =
+        "0";
+
+      ocrEl.textContent =
+        "-";
+
+      matchEl.textContent =
+        "-";
+
     }
+
   }
+
+
+  /* =========================================================
+     MASTER OCR TEST
+     
+     Untuk tahap awal hanya P0008 dan P0009.
+     
+     Setelah test berhasil,
+     daftar ini akan diperluas menjadi 31 produk.
+  ========================================================= */
+
+  const OCR_MASTER = [
+
+    {
+
+      id: "P0008",
+
+      name:
+        "BETADINE MOUTHWASH AND GARGLE 100 ML",
+
+      aliases: [
+
+        "BETADINE MOUTHWASH AND GARGLE 100 ML",
+
+        "BETADINE MOUTHWASH & GARGLE 100 ML",
+
+        "BETADINE MOUTHWASH AND GARGLE 100ML",
+
+        "BETADINE MOUTHWASH & GARGLE 100ML",
+
+        "BETADINE MW & GARGLE 100 ML",
+
+        "BETADINE MW GARGLE 100 ML"
+
+      ],
+
+      requiredTokens: [
+
+        "BETADINE",
+
+        "MOUTHWASH",
+
+        "GARGLE"
+
+      ],
+
+      size:
+        "100 ML"
+
+    },
+
+
+    {
+
+      id: "P0009",
+
+      name:
+        "BETADINE MOUTHWASH AND GARGLE 190 ML",
+
+      aliases: [
+
+        "BETADINE MOUTHWASH AND GARGLE 190 ML",
+
+        "BETADINE MOUTHWASH & GARGLE 190 ML",
+
+        "BETADINE MOUTHWASH AND GARGLE 190ML",
+
+        "BETADINE MOUTHWASH & GARGLE 190ML",
+
+        "BETADINE MW & GARGLE 190 ML"
+
+      ],
+
+      requiredTokens: [
+
+        "BETADINE",
+
+        "MOUTHWASH",
+
+        "GARGLE"
+
+      ],
+
+      size:
+        "190 ML"
+
+    }
+
+  ];
+
+
+  /* =========================================================
+     NORMALISASI OCR
+  ========================================================= */
+
+  function normalizeOCR(text) {
+
+    return (text || "")
+
+      .toUpperCase()
+
+      .replace(/0/g, "O")
+
+      .replace(/[|]/g, "I")
+
+      .replace(/[^A-Z0-9]+/g, " ")
+
+      .replace(/\s+/g, " ")
+
+      .trim();
+
+  }
+
+
+  /* =========================================================
+     LEVENSHTEIN
+  ========================================================= */
+
+  function levenshtein(a, b) {
+
+    const prev =
+      Array.from(
+        {
+          length:
+            b.length + 1
+        },
+        (_, i) => i
+      );
+
+
+    for (
+      let i = 1;
+      i <= a.length;
+      i++
+    ) {
+
+      let cur = [i];
+
+
+      for (
+        let j = 1;
+        j <= b.length;
+        j++
+      ) {
+
+        cur[j] =
+          Math.min(
+
+            cur[j - 1] + 1,
+
+            prev[j] + 1,
+
+            prev[j - 1] +
+            (
+              a[i - 1] === b[j - 1]
+                ? 0
+                : 1
+            )
+
+          );
+
+      }
+
+
+      for (
+        let j = 0;
+        j <= b.length;
+        j++
+      ) {
+
+        prev[j] =
+          cur[j];
+
+      }
+
+    }
+
+
+    return prev[b.length];
+
+  }
+
+
+  function similarity(a, b) {
+
+    if (!a || !b)
+      return 0;
+
+
+    const distance =
+      levenshtein(a, b);
+
+
+    return Math.max(
+      0,
+      1 -
+      distance /
+      Math.max(
+        a.length,
+        b.length
+      )
+    );
+
+  }
+
+
+  function tokenSimilarity(
+    token,
+    target
+  ) {
+
+    if (
+      token === target
+    )
+      return 1;
+
+
+    if (
+      token.length < 3 ||
+      target.length < 3
+    )
+      return 0;
+
+
+    return similarity(
+      token,
+      target
+    );
+
+  }
+
+
+  function hasFuzzyToken(
+    tokens,
+    target,
+    threshold = 0.68
+  ) {
+
+    return tokens.some(
+
+      t =>
+        tokenSimilarity(
+          t,
+          target
+        ) >= threshold
+
+    );
+
+  }
+
+
+  /* =========================================================
+     DETEKSI UKURAN
+  ========================================================= */
+
+  function detectSize(rawText) {
+
+    const t =
+      (rawText || "")
+      .toUpperCase()
+      .replace(
+        /\s+/g,
+        " "
+      );
+
+
+    /*
+      Prioritas ukuran normal.
+    */
+
+    if (
+      /\b190\s*ML\b/.test(t)
+    ) {
+
+      return "190 ML";
+
+    }
+
+
+    if (
+      /\b100\s*ML\b/.test(t)
+    ) {
+
+      return "100 ML";
+
+    }
+
+
+    /*
+      OCR kadang membaca:
+
+      100 ML → 00 ML
+      100 ML → OO ML
+      100 ML → I00 ML
+
+    */
+
+    if (
+      /\b0{2}\s*ML\b/.test(t) ||
+      /\bOO\s*ML\b/.test(t)
+    ) {
+
+      return "100 ML";
+
+    }
+
+
+    if (
+      /\bI90\s*ML\b/.test(t)
+    ) {
+
+      return "190 ML";
+
+    }
+
+
+    if (
+      /\bI00\s*ML\b/.test(t)
+    ) {
+
+      return "100 ML";
+
+    }
+
+
+    return null;
+
+  }
+
+
+  /* =========================================================
+     SCORE PRODUK
+  ========================================================= */
+
+  function scoreProduct(
+    rawText,
+    product
+  ) {
+
+    const normalized =
+      normalizeOCR(
+        rawText
+      );
+
+
+    const tokens =
+      normalized
+      .split(" ")
+      .filter(Boolean);
+
+
+    const size =
+      detectSize(
+        rawText
+      );
+
+
+    let tokenHits = 0;
+
+
+    product.requiredTokens
+      .forEach(
+
+        token => {
+
+          if (
+            hasFuzzyToken(
+              tokens,
+              token
+            )
+          ) {
+
+            tokenHits++;
+
+          }
+
+        }
+
+      );
+
+
+    const tokenScore =
+      tokenHits /
+      product.requiredTokens.length;
+
+
+    const sizeScore =
+      size === product.size
+        ? 1
+        : (
+            size
+              ? 0
+              : 0.35
+          );
+
+
+    let aliasScore = 0;
+
+
+    product.aliases
+      .forEach(
+
+        alias => {
+
+          aliasScore =
+            Math.max(
+
+              aliasScore,
+
+              similarity(
+
+                normalized,
+
+                normalizeOCR(
+                  alias
+                )
+
+              )
+
+            );
+
+        }
+
+      );
+
+
+    /*
+      Bobot:
+
+      Kata kunci = 45%
+      Ukuran     = 40%
+      Alias      = 15%
+
+      Ukuran sengaja dibuat sangat penting
+      supaya 100 ML dan 190 ML tidak tertukar.
+    */
+
+    const score =
+      (
+        tokenScore * 0.45
+      )
+      +
+      (
+        sizeScore * 0.40
+      )
+      +
+      (
+        aliasScore * 0.15
+      );
+
+
+    return {
+
+      score,
+
+      size,
+
+      tokenHits,
+
+      aliasScore
+
+    };
+
+  }
+
+
+  /* =========================================================
+     DETEKSI PRODUK
+  ========================================================= */
 
   function detectProduct(text) {
-    const t = text.toUpperCase();
-    let product = "Produk tidak dikenali";
 
-    if (t.includes("BETADINE") && t.includes("5") && t.includes("ML")) {
-      product = "BETADINE SOLUTION 5 ML";
-    } else if (t.includes("BETADINE") && t.includes("30") && t.includes("ML")) {
-      product = "BETADINE SOLUTION 30 ML";
+    const ranked =
+
+      OCR_MASTER
+
+        .map(
+
+          p => ({
+
+            product: p,
+
+            ...scoreProduct(
+              text,
+              p
+            )
+
+          })
+
+        )
+
+        .sort(
+
+          (a, b) =>
+            b.score -
+            a.score
+
+        );
+
+
+    const best =
+      ranked[0];
+
+
+    const percent =
+      Math.round(
+        best.score * 100
+      );
+
+
+    /*
+      Syarat MATCH:
+
+      Minimal 2 dari 3 kata kunci
+      DAN ukuran harus cocok
+      DAN score minimal 70%.
+    */
+
+    const accepted =
+
+      best.tokenHits >= 2 &&
+
+      best.size ===
+        best.product.size &&
+
+      best.score >= 0.70;
+
+
+    if (accepted) {
+
+      productEl.textContent =
+        `${best.product.id} — ${best.product.name}`;
+
+
+      matchEl.textContent =
+        `✅ MATCH ${percent}% | ` +
+        `Ukuran: ${best.size} | ` +
+        `${best.tokenHits}/3 kata kunci`;
+
+
+      setStatus(
+        `✅ Produk dikenali: ` +
+        `${best.product.name}`
+      );
+
+
+    } else {
+
+      productEl.textContent =
+        "Produk belum dikenali";
+
+
+      matchEl.textContent =
+        `⚠️ Kandidat: ` +
+        `${best.product.id} — ` +
+        `${best.product.name} | ` +
+        `${percent}% | ` +
+        `Ukuran OCR: ` +
+        `${best.size || "tidak terbaca"}`;
+
+
+      setStatus(
+        "⚠️ OCR selesai, tetapi " +
+        "kecocokan belum cukup kuat."
+      );
+
     }
 
-    productEl.textContent = product;
   }
 
-  window.addEventListener("beforeunload", stopCamera);
+
+  window.addEventListener(
+    "beforeunload",
+    stopCamera
+  );
+
 </script>
+
 </body>
 </html>
