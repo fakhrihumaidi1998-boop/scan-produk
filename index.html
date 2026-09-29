@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Scan Sample V6 - Counting</title>
+<title>Scan Sample V6.1 - Counting</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
@@ -60,6 +60,10 @@ body{
     margin-bottom:12px;
 }
 
+.camera-wrapper{
+    position:relative;
+}
+
 video,
 canvas.preview{
     width:100%;
@@ -67,10 +71,6 @@ canvas.preview{
     object-fit:contain;
     background:#111;
     border-radius:12px;
-}
-
-.camera-wrapper{
-    position:relative;
 }
 
 .camera-guide{
@@ -249,7 +249,7 @@ th{
     padding:12px;
     border-radius:8px;
     font-size:11px;
-    max-height:250px;
+    max-height:300px;
     overflow:auto;
 }
 
@@ -268,6 +268,26 @@ th{
     color:#6b7280;
 }
 
+.detect-info{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-top:12px;
+}
+
+.detect-box{
+    background:#f5f7fa;
+    border-radius:8px;
+    padding:10px;
+    text-align:center;
+}
+
+.detect-box strong{
+    display:block;
+    font-size:18px;
+    color:#0756a3;
+}
+
 @media(max-width:600px){
 
     .header h1{
@@ -283,6 +303,10 @@ th{
     .count-number{
         font-size:45px;
     }
+
+    .detect-info{
+        grid-template-columns:1fr;
+    }
 }
 </style>
 </head>
@@ -290,13 +314,14 @@ th{
 <body>
 
 <div class="header">
-    <h1>📦 Scan Sample V6</h1>
+    <h1>📦 Scan Sample V6.1</h1>
     <p>Identifikasi Produk + Counting Jumlah Sampel</p>
 </div>
 
 <div class="container">
 
     <!-- CAMERA -->
+
     <div class="card">
 
         <div class="section-title">
@@ -308,7 +333,9 @@ th{
             <video id="video" autoplay playsinline></video>
 
             <div class="camera-guide">
-                <span>Posisikan semua sampel di dalam area</span>
+                <span>
+                    Posisikan semua sampel di dalam area
+                </span>
             </div>
 
         </div>
@@ -364,6 +391,7 @@ th{
 
 
     <!-- PREVIEW -->
+
     <div class="card hidden" id="previewCard">
 
         <div class="section-title">
@@ -376,13 +404,15 @@ th{
         </canvas>
 
         <div class="small">
-            Pastikan semua sampel terlihat jelas dan tidak terlalu bertumpuk.
+            Untuk hasil terbaik, usahakan label produk
+            terlihat jelas dan sampel tidak saling menutupi.
         </div>
 
     </div>
 
 
     <!-- STATUS -->
+
     <div class="card">
 
         <div class="section-title">
@@ -406,6 +436,7 @@ th{
 
 
     <!-- RESULT -->
+
     <div
         class="card hidden"
         id="resultCard">
@@ -465,7 +496,8 @@ th{
     </div>
 
 
-    <!-- COUNTING IMAGE -->
+    <!-- COUNT RESULT -->
+
     <div
         class="card hidden"
         id="countCard">
@@ -475,7 +507,32 @@ th{
         </div>
 
         <div class="small">
-            Kotak hijau menunjukkan objek sampel yang berhasil terdeteksi.
+            Setiap kotak hijau = satu sampel yang terdeteksi.
+        </div>
+
+        <div class="detect-info">
+
+            <div class="detect-box">
+                <span>Objek</span>
+                <strong id="detectedObjectCount">
+                    0
+                </strong>
+            </div>
+
+            <div class="detect-box">
+                <span>Produk</span>
+                <strong id="detectedProductCode">
+                    -
+                </strong>
+            </div>
+
+            <div class="detect-box">
+                <span>Ukuran</span>
+                <strong id="detectedProductSize">
+                    -
+                </strong>
+            </div>
+
         </div>
 
         <br>
@@ -491,6 +548,7 @@ th{
 
 
     <!-- OCR -->
+
     <div
         class="card hidden"
         id="ocrCard">
@@ -509,12 +567,6 @@ th{
 </div>
 
 
-<canvas
-    id="workCanvas"
-    class="hidden">
-</canvas>
-
-
 <script>
 
 /* =========================================================
@@ -527,6 +579,12 @@ const PRODUCTS = [
         code:"P0001",
         name:"BETADINE SOLUTION",
         size:"5 ML",
+
+        keywords:[
+            "BETADINE",
+            "SOLUTION"
+        ],
+
         aliases:[
             "BETADINE SOLUTION 5 ML",
             "BETADINE 5 ML",
@@ -538,6 +596,12 @@ const PRODUCTS = [
         code:"P0002",
         name:"BETADINE SOLUTION",
         size:"15 ML",
+
+        keywords:[
+            "BETADINE",
+            "SOLUTION"
+        ],
+
         aliases:[
             "BETADINE SOLUTION 15 ML",
             "BETADINE 15 ML",
@@ -549,6 +613,12 @@ const PRODUCTS = [
         code:"P0003",
         name:"BETADINE SOLUTION",
         size:"30 ML",
+
+        keywords:[
+            "BETADINE",
+            "SOLUTION"
+        ],
+
         aliases:[
             "BETADINE SOLUTION 30 ML",
             "BETADINE 30 ML",
@@ -560,6 +630,12 @@ const PRODUCTS = [
         code:"P0004",
         name:"BETADINE SOLUTION",
         size:"60 ML",
+
+        keywords:[
+            "BETADINE",
+            "SOLUTION"
+        ],
+
         aliases:[
             "BETADINE SOLUTION 60 ML",
             "BETADINE 60 ML",
@@ -571,6 +647,12 @@ const PRODUCTS = [
         code:"P0005",
         name:"BETADINE SOLUTION",
         size:"1 L",
+
+        keywords:[
+            "BETADINE",
+            "SOLUTION"
+        ],
+
         aliases:[
             "BETADINE SOLUTION 1 L",
             "BETADINE SOLUTION 1000 ML",
@@ -583,6 +665,12 @@ const PRODUCTS = [
         code:"P0006",
         name:"BETADINE OINTMENT",
         size:"5 G",
+
+        keywords:[
+            "BETADINE",
+            "OINTMENT"
+        ],
+
         aliases:[
             "BETADINE OINTMENT 5 G",
             "BETADINE OINTMENT",
@@ -594,6 +682,12 @@ const PRODUCTS = [
         code:"P0007",
         name:"BETADINE OINTMENT",
         size:"10 G",
+
+        keywords:[
+            "BETADINE",
+            "OINTMENT"
+        ],
+
         aliases:[
             "BETADINE OINTMENT 10 G",
             "BETADINE OINTMENT",
@@ -605,16 +699,22 @@ const PRODUCTS = [
         code:"P0008",
         name:"BETADINE MOUTHWASH AND GARGLE",
         size:"100 ML",
+
+        keywords:[
+            "BETADINE",
+            "MOUTHWASH",
+            "GARGLE"
+        ],
+
         aliases:[
-            "BETADINE MOUTHWASH AND GARGLE 100 ML",
-            "BETADINE MOUTHWASH GARGLE 100 ML",
+            "BETADINE MOUTHWASH AND GARGLE",
+            "BETADINE MOUTHWASH GARGLE",
             "BETADINE MOUTHWASH",
             "BETADINE GARGLE",
             "BETADINE MW GARGLE",
-            "BETADINE MW & GARGLE",
+            "BETADINE MW GARGLE",
             "MOUTHWASH AND GARGLE",
-            "MOUTHWASH GARGLE",
-            "BETADINE 100 ML"
+            "MOUTHWASH GARGLE"
         ]
     }
 
@@ -649,9 +749,6 @@ const photoCanvas =
 const countCanvas =
     document.getElementById("countCanvas");
 
-const workCanvas =
-    document.getElementById("workCanvas");
-
 const statusEl =
     document.getElementById("status");
 
@@ -672,20 +769,24 @@ const ocrCard =
 
 
 /* =========================================================
-   OPENCV READY
+   OPENCV
    ========================================================= */
 
 function waitForOpenCV(){
 
-    if(typeof cv !== "undefined"){
+    if(
+        typeof cv !== "undefined" &&
+        cv.Mat
+    ){
 
         cvReady = true;
 
-        console.log("OpenCV ready");
-
     }else{
 
-        setTimeout(waitForOpenCV,500);
+        setTimeout(
+            waitForOpenCV,
+            500
+        );
 
     }
 
@@ -707,7 +808,13 @@ function setStatus(text){
 function setProgress(value){
 
     progressBar.style.width =
-        Math.max(0,Math.min(100,value)) + "%";
+        Math.max(
+            0,
+            Math.min(
+                100,
+                value
+            )
+        ) + "%";
 
 }
 
@@ -722,29 +829,40 @@ async function startCamera(){
 
         if(stream){
 
-            stream.getTracks().forEach(
-                track => track.stop()
-            );
+            stream.getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
 
         }
 
         stream =
-            await navigator.mediaDevices.getUserMedia({
+            await navigator.mediaDevices
+            .getUserMedia({
 
                 video:{
                     facingMode:facingMode,
-                    width:{ideal:1920},
-                    height:{ideal:1080}
+
+                    width:{
+                        ideal:1920
+                    },
+
+                    height:{
+                        ideal:1080
+                    }
+
                 },
 
                 audio:false
 
             });
 
-        video.srcObject = stream;
+        video.srcObject =
+            stream;
 
         setStatus(
-            "📷 Kamera aktif. Susun semua sampel di dalam kotak hijau."
+            "📷 Kamera aktif. Posisikan semua sampel di dalam kotak hijau."
         );
 
     }catch(error){
@@ -804,8 +922,11 @@ function takePhoto(){
 
     }
 
-    photoCanvas.width = width;
-    photoCanvas.height = height;
+    photoCanvas.width =
+        width;
+
+    photoCanvas.height =
+        height;
 
     const ctx =
         photoCanvas.getContext("2d");
@@ -818,9 +939,12 @@ function takePhoto(){
         height
     );
 
-    currentImage = photoCanvas;
+    currentImage =
+        photoCanvas;
 
-    previewCard.classList.remove("hidden");
+    previewCard.classList.remove(
+        "hidden"
+    );
 
     setStatus(
         "✅ Foto berhasil diambil. Tekan ANALISIS & HITUNG."
@@ -830,7 +954,7 @@ function takePhoto(){
 
 
 /* =========================================================
-   UPLOAD PHOTO
+   UPLOAD
    ========================================================= */
 
 function uploadPhoto(event){
@@ -838,26 +962,33 @@ function uploadPhoto(event){
     const file =
         event.target.files[0];
 
-    if(!file) return;
+    if(!file)
+        return;
 
     const img =
         new Image();
 
     img.onload = function(){
 
-        let maxWidth = 1800;
+        const maxWidth =
+            1800;
 
-        let scale =
+        const scale =
             Math.min(
                 1,
-                maxWidth / img.width
+                maxWidth /
+                img.width
             );
 
         photoCanvas.width =
-            Math.round(img.width * scale);
+            Math.round(
+                img.width * scale
+            );
 
         photoCanvas.height =
-            Math.round(img.height * scale);
+            Math.round(
+                img.height * scale
+            );
 
         const ctx =
             photoCanvas.getContext("2d");
@@ -895,24 +1026,99 @@ function uploadPhoto(event){
 
 function normalizeText(text){
 
-    if(!text) return "";
+    if(!text)
+        return "";
 
     let t =
         text
         .toUpperCase()
+        .replace(/\r/g," ")
+        .replace(/\n/g," ")
         .replace(/[|]/g,"I")
-        .replace(/[“”"]/g,"")
+        .replace(/[“”"]/g," ")
+        .replace(/[.,;:_\-]+/g," ")
         .replace(/\s+/g," ")
         .trim();
 
-    t =
-        t.replace(/O(?=\d)/g,"0");
+
+    /*
+     * Kesalahan OCR umum
+     */
 
     t =
-        t.replace(/(\d)\s*ML\b/g,"$1 ML");
+        t.replace(/\bIOO\b/g,"100");
 
     t =
-        t.replace(/(\d)\s*G\b/g,"$1 G");
+        t.replace(/\bI00\b/g,"100");
+
+    t =
+        t.replace(/\bIO\b/g,"10");
+
+    t =
+        t.replace(/\bO0\b/g,"00");
+
+
+    /*
+     * 100ML -> 100 ML
+     */
+
+    t =
+        t.replace(
+            /(\d+)\s*ML\b/g,
+            "$1 ML"
+        );
+
+
+    t =
+        t.replace(
+            /(\d+)\s*G\b/g,
+            "$1 G"
+        );
+
+
+    /*
+     * 1L -> 1 L
+     */
+
+    t =
+        t.replace(
+            /\b1L\b/g,
+            "1 L"
+        );
+
+
+    /*
+     * OCR kadang baca M0UTHWASH
+     */
+
+    t =
+        t.replace(
+            /M0UTH/g,
+            "MOUTH"
+        );
+
+
+    /*
+     * OCR kadang baca GARGLE menjadi GARG1E
+     */
+
+    t =
+        t.replace(
+            /GARG1E/g,
+            "GARGLE"
+        );
+
+
+    /*
+     * OCR kadang baca BETAD1NE
+     */
+
+    t =
+        t.replace(
+            /BETAD1NE/g,
+            "BETADINE"
+        );
+
 
     return t;
 
@@ -920,29 +1126,61 @@ function normalizeText(text){
 
 
 /* =========================================================
-   LEVENSHTEIN
+   FUZZY SIMILARITY
    ========================================================= */
 
 function levenshtein(a,b){
 
-    const m = a.length;
-    const n = b.length;
+    const m =
+        a.length;
+
+    const n =
+        b.length;
 
     const dp =
         Array.from(
-            {length:m+1},
-            () => new Array(n+1).fill(0)
+            {
+                length:m+1
+            },
+            () =>
+                new Array(n+1)
+                .fill(0)
         );
 
-    for(let i=0;i<=m;i++)
+
+    for(
+        let i=0;
+        i<=m;
+        i++
+    ){
+
         dp[i][0] = i;
 
-    for(let j=0;j<=n;j++)
+    }
+
+
+    for(
+        let j=0;
+        j<=n;
+        j++
+    ){
+
         dp[0][j] = j;
 
-    for(let i=1;i<=m;i++){
+    }
 
-        for(let j=1;j<=n;j++){
+
+    for(
+        let i=1;
+        i<=m;
+        i++
+    ){
+
+        for(
+            let j=1;
+            j<=n;
+            j++
+        ){
 
             const cost =
                 a[i-1] === b[j-1]
@@ -971,24 +1209,75 @@ function levenshtein(a,b){
 
 function similarity(a,b){
 
-    a = normalizeText(a);
-    b = normalizeText(b);
+    a =
+        normalizeText(a);
 
-    if(!a || !b)
+    b =
+        normalizeText(b);
+
+    if(
+        !a ||
+        !b
+    )
         return 0;
 
-    const distance =
-        levenshtein(a,b);
-
     return 1 -
-        distance /
-        Math.max(a.length,b.length);
+        levenshtein(a,b) /
+        Math.max(
+            a.length,
+            b.length
+        );
 
 }
 
 
 /* =========================================================
-   PRODUCT MATCH
+   SIZE NORMALIZATION
+   ========================================================= */
+
+function sizeDetected(text,size){
+
+    const t =
+        normalizeText(text);
+
+    const s =
+        normalizeText(size);
+
+
+    if(
+        s === "100 ML"
+    ){
+
+        return(
+            t.includes("100 ML") ||
+            t.includes("100ML") ||
+            t.includes("IOO ML") ||
+            t.includes("I00 ML")
+        );
+
+    }
+
+
+    if(
+        s === "1 L"
+    ){
+
+        return(
+            t.includes("1 L") ||
+            t.includes("1L") ||
+            t.includes("1000 ML")
+        );
+
+    }
+
+
+    return t.includes(s);
+
+}
+
+
+/* =========================================================
+   MATCH PRODUCT V6.1
    ========================================================= */
 
 function matchProduct(text){
@@ -998,86 +1287,168 @@ function matchProduct(text){
 
     let best = null;
 
+
     PRODUCTS.forEach(product => {
 
         let score = 0;
 
-        product.aliases.forEach(alias => {
-
-            const sim =
-                similarity(
-                    t,
-                    alias
-                );
-
-            score =
-                Math.max(
-                    score,
-                    sim
-                );
-
-        });
+        let keywordHits = 0;
 
 
         /*
-         * Tambahan keyword
+         * ------------------------------------------
+         * KEYWORD DETECTION
+         * ------------------------------------------
          */
 
-        const keywords =
-            product.name
-            .split(" ");
+        product.keywords.forEach(
+            keyword => {
 
-        let keywordHit = 0;
+                if(
+                    t.includes(
+                        normalizeText(keyword)
+                    )
+                ){
 
-        keywords.forEach(word => {
+                    keywordHits++;
+
+                }
+
+            }
+        );
+
+
+        /*
+         * Setiap keyword punya nilai.
+         */
+
+        if(
+            product.keywords.length
+        ){
+
+            score +=
+                (
+                    keywordHits /
+                    product.keywords.length
+                ) * 0.60;
+
+        }
+
+
+        /*
+         * ------------------------------------------
+         * SIZE
+         * ------------------------------------------
+         */
+
+        if(
+            sizeDetected(
+                t,
+                product.size
+            )
+        ){
+
+            score += 0.30;
+
+        }
+
+
+        /*
+         * ------------------------------------------
+         * ALIAS FUZZY
+         * ------------------------------------------
+         */
+
+        let bestAlias =
+            0;
+
+        product.aliases.forEach(
+            alias => {
+
+                const sim =
+                    similarity(
+                        t,
+                        alias
+                    );
+
+                bestAlias =
+                    Math.max(
+                        bestAlias,
+                        sim
+                    );
+
+            }
+        );
+
+
+        score +=
+            bestAlias * 0.25;
+
+
+        /*
+         * ------------------------------------------
+         * BETADINE SPECIAL
+         * ------------------------------------------
+         */
+
+        if(
+            t.includes("BETADINE")
+        ){
+
+            score += 0.10;
+
+        }
+
+
+        /*
+         * ------------------------------------------
+         * MOUTHWASH/GARGLE SPECIAL
+         * ------------------------------------------
+         */
+
+        if(
+            product.code === "P0008"
+        ){
 
             if(
-                word.length >= 3 &&
-                t.includes(word)
+                t.includes("MOUTHWASH")
             ){
 
-                keywordHit++;
+                score += 0.15;
 
             }
 
-        });
+            if(
+                t.includes("GARGLE")
+            ){
 
-        if(keywords.length){
+                score += 0.15;
 
-            score +=
-                (keywordHit / keywords.length)
-                * 0.20;
+            }
 
         }
 
-
-        /*
-         * SIZE
-         */
-
-        const size =
-            product.size
-            .replace(" ","");
-
-        const size2 =
-            product.size;
 
         if(
-            t.includes(size) ||
-            t.includes(size2)
+            !best ||
+            score > best.score
         ){
-
-            score += 0.20;
-
-        }
-
-
-        if(!best || score > best.score){
 
             best = {
 
                 product:product,
-                score:score
+
+                score:score,
+
+                keywordHits:keywordHits,
+
+                aliasScore:bestAlias,
+
+                sizeFound:
+                    sizeDetected(
+                        t,
+                        product.size
+                    )
 
             };
 
@@ -1092,7 +1463,7 @@ function matchProduct(text){
 
 
 /* =========================================================
-   CREATE OCR WORKER
+   OCR WORKER
    ========================================================= */
 
 async function getOCRWorker(){
@@ -1100,31 +1471,44 @@ async function getOCRWorker(){
     if(worker)
         return worker;
 
+
     setStatus(
         "🔤 Menyiapkan mesin OCR..."
     );
+
 
     worker =
         await Tesseract.createWorker(
             "eng",
             1,
             {
+
                 logger:m => {
 
                     if(
-                        m.status === "recognizing text" &&
-                        m.progress
+                        m.status ===
+                        "recognizing text"
                     ){
 
-                        setProgress(
-                            m.progress * 30
-                        );
+                        if(
+                            m.progress
+                        ){
+
+                            setProgress(
+                                5 +
+                                m.progress *
+                                25
+                            );
+
+                        }
 
                     }
 
                 }
+
             }
         );
+
 
     await worker.setParameters({
 
@@ -1134,13 +1518,14 @@ async function getOCRWorker(){
 
     });
 
+
     return worker;
 
 }
 
 
 /* =========================================================
-   OCR IMAGE
+   OCR CANVAS
    ========================================================= */
 
 async function OCRCanvas(canvas){
@@ -1149,21 +1534,28 @@ async function OCRCanvas(canvas){
         await getOCRWorker();
 
     const result =
-        await w.recognize(canvas);
+        await w.recognize(
+            canvas
+        );
 
-    return result.data.text || "";
+    return (
+        result.data.text ||
+        ""
+    );
 
 }
 
 
 /* =========================================================
-   OCR PREPROCESS
+   CREATE IMAGE VARIANT
    ========================================================= */
 
-function createOCRCanvas(source){
+function makeGrayVariant(source){
 
     const canvas =
-        document.createElement("canvas");
+        document.createElement(
+            "canvas"
+        );
 
     canvas.width =
         source.width;
@@ -1172,12 +1564,116 @@ function createOCRCanvas(source){
         source.height;
 
     const ctx =
-        canvas.getContext("2d");
+        canvas.getContext(
+            "2d"
+        );
 
     ctx.drawImage(
         source,
         0,
         0
+    );
+
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+    const data =
+        imageData.data;
+
+
+    for(
+        let i=0;
+        i<data.length;
+        i+=4
+    ){
+
+        let gray =
+            data[i] * 0.299 +
+            data[i+1] * 0.587 +
+            data[i+2] * 0.114;
+
+
+        /*
+         * Contrast lebih kuat
+         */
+
+        gray =
+            (gray - 128) *
+            1.7 +
+            128;
+
+
+        gray =
+            Math.max(
+                0,
+                Math.min(
+                    255,
+                    gray
+                )
+            );
+
+
+        data[i] =
+            gray;
+
+        data[i+1] =
+            gray;
+
+        data[i+2] =
+            gray;
+
+    }
+
+
+    ctx.putImageData(
+        imageData,
+        0,
+        0
+    );
+
+
+    return canvas;
+
+}
+
+
+/* =========================================================
+   UPSCALE
+   ========================================================= */
+
+function upscaleCanvas(source){
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+    canvas.width =
+        source.width * 1.5;
+
+    canvas.height =
+        source.height * 1.5;
+
+    const ctx =
+        canvas.getContext(
+            "2d"
+        );
+
+    ctx.imageSmoothingEnabled =
+        true;
+
+    ctx.drawImage(
+        source,
+        0,
+        0,
+        canvas.width,
+        canvas.height
     );
 
     return canvas;
@@ -1186,7 +1682,7 @@ function createOCRCanvas(source){
 
 
 /* =========================================================
-   WHOLE IMAGE OCR
+   IDENTIFY PRODUCT
    ========================================================= */
 
 async function identifyProduct(){
@@ -1197,110 +1693,84 @@ async function identifyProduct(){
 
     setProgress(5);
 
-    let texts = [];
+
+    const variants = [];
+
 
     /*
-     * OCR ORIGINAL
+     * 1. ORIGINAL
      */
 
-    const original =
-        createOCRCanvas(
+    variants.push(
+        currentImage
+    );
+
+
+    /*
+     * 2. GRAYSCALE + CONTRAST
+     */
+
+    const gray =
+        makeGrayVariant(
             currentImage
         );
 
-    texts.push(
-        await OCRCanvas(original)
+    variants.push(
+        gray
     );
 
 
     /*
-     * OCR GRAYSCALE / CONTRAST
+     * 3. UPSCALE
      */
 
-    const processed =
-        document.createElement("canvas");
-
-    processed.width =
-        currentImage.width;
-
-    processed.height =
-        currentImage.height;
-
-    const ctx =
-        processed.getContext("2d");
-
-    ctx.drawImage(
-        currentImage,
-        0,
-        0
-    );
-
-    const imageData =
-        ctx.getImageData(
-            0,
-            0,
-            processed.width,
-            processed.height
+    const upscaled =
+        upscaleCanvas(
+            gray
         );
 
-    const data =
-        imageData.data;
+    variants.push(
+        upscaled
+    );
+
+
+    let allText = [];
+
+
+    /*
+     * OCR setiap variant
+     */
 
     for(
         let i=0;
-        i<data.length;
-        i+=4
+        i<variants.length;
+        i++
     ){
 
-        const gray =
-            (
-                data[i] * 0.299 +
-                data[i+1] * 0.587 +
-                data[i+2] * 0.114
+        const text =
+            await OCRCanvas(
+                variants[i]
             );
 
-        const contrast =
-            Math.max(
-                0,
-                Math.min(
-                    255,
-                    (gray - 128) * 1.5 + 128
-                )
-            );
-
-        data[i] =
-            contrast;
-
-        data[i+1] =
-            contrast;
-
-        data[i+2] =
-            contrast;
+        allText.push(
+            text
+        );
 
     }
 
-    ctx.putImageData(
-        imageData,
-        0,
-        0
-    );
-
-    texts.push(
-        await OCRCanvas(processed)
-    );
-
 
     /*
-     * GABUNGKAN OCR
+     * Gabungkan
      */
 
     const combined =
-        texts.join("\n");
+        allText.join("\n");
 
 
     ocrCard.classList.remove(
         "hidden"
     );
+
 
     document.getElementById(
         "ocrText"
@@ -1308,10 +1778,18 @@ async function identifyProduct(){
         combined;
 
 
-    const match =
-        matchProduct(combined);
+    /*
+     * MATCH
+     */
 
-    setProgress(40);
+    const match =
+        matchProduct(
+            combined
+        );
+
+
+    setProgress(42);
+
 
     return {
 
@@ -1325,16 +1803,22 @@ async function identifyProduct(){
 
 
 /* =========================================================
-   COUNTING
+   IOU
    ========================================================= */
 
 function calculateIoU(a,b){
 
     const x1 =
-        Math.max(a.x,b.x);
+        Math.max(
+            a.x,
+            b.x
+        );
 
     const y1 =
-        Math.max(a.y,b.y);
+        Math.max(
+            a.y,
+            b.y
+        );
 
     const x2 =
         Math.min(
@@ -1348,68 +1832,97 @@ function calculateIoU(a,b){
             b.y+b.height
         );
 
+
     const intersection =
-        Math.max(0,x2-x1) *
-        Math.max(0,y2-y1);
+        Math.max(
+            0,
+            x2-x1
+        ) *
+        Math.max(
+            0,
+            y2-y1
+        );
+
 
     const areaA =
-        a.width*a.height;
+        a.width *
+        a.height;
 
     const areaB =
-        b.width*b.height;
+        b.width *
+        b.height;
+
 
     const union =
         areaA +
         areaB -
         intersection;
 
+
     return union
-        ? intersection/union
+        ? intersection /
+          union
         : 0;
 
 }
 
 
 /* =========================================================
-   REMOVE OVERLAPPING BOXES
+   REMOVE OVERLAPS
    ========================================================= */
 
 function removeOverlaps(boxes){
 
     boxes.sort(
         (a,b) =>
-            b.area - a.area
+            b.area -
+            a.area
     );
+
 
     const result = [];
 
-    boxes.forEach(box => {
 
-        let overlap = false;
+    boxes.forEach(
+        box => {
 
-        for(const existing of result){
+            let overlap =
+                false;
 
-            if(
-                calculateIoU(
-                    box,
-                    existing
-                ) > 0.35
+
+            for(
+                const existing
+                of result
             ){
 
-                overlap = true;
-                break;
+                if(
+                    calculateIoU(
+                        box,
+                        existing
+                    ) > 0.35
+                ){
+
+                    overlap =
+                        true;
+
+                    break;
+
+                }
+
+            }
+
+
+            if(!overlap){
+
+                result.push(
+                    box
+                );
 
             }
 
         }
+    );
 
-        if(!overlap){
-
-            result.push(box);
-
-        }
-
-    });
 
     return result;
 
@@ -1417,7 +1930,7 @@ function removeOverlaps(boxes){
 
 
 /* =========================================================
-   OBJECT DETECTION
+   DETECT OBJECTS
    ========================================================= */
 
 function detectObjects(){
@@ -1425,15 +1938,17 @@ function detectObjects(){
     if(!cvReady){
 
         throw new Error(
-            "OpenCV belum siap."
+            "OpenCV belum siap. Tunggu beberapa detik lalu coba lagi."
         );
 
     }
+
 
     const src =
         cv.imread(
             currentImage
         );
+
 
     const gray =
         new cv.Mat();
@@ -1443,6 +1958,7 @@ function detectObjects(){
 
     const edges =
         new cv.Mat();
+
 
     const kernel =
         cv.Mat.ones(
@@ -1462,7 +1978,10 @@ function detectObjects(){
     cv.GaussianBlur(
         gray,
         blur,
-        new cv.Size(5,5),
+        new cv.Size(
+            5,
+            5
+        ),
         0
     );
 
@@ -1470,8 +1989,8 @@ function detectObjects(){
     cv.Canny(
         blur,
         edges,
-        40,
-        120
+        35,
+        110
     );
 
 
@@ -1499,7 +2018,9 @@ function detectObjects(){
 
 
     const imageArea =
-        src.cols * src.rows;
+        src.cols *
+        src.rows;
+
 
     let boxes = [];
 
@@ -1513,14 +2034,17 @@ function detectObjects(){
         const contour =
             contours.get(i);
 
+
         const rect =
             cv.boundingRect(
                 contour
             );
 
+
         const area =
             rect.width *
             rect.height;
+
 
         const ratio =
             rect.width /
@@ -1528,34 +2052,12 @@ function detectObjects(){
 
 
         /*
-         * Filter object
+         * Minimum object
          */
 
         if(
-            area < imageArea * 0.008
-        ){
-
-            contour.delete();
-
-            continue;
-
-        }
-
-
-        if(
-            area > imageArea * 0.60
-        ){
-
-            contour.delete();
-
-            continue;
-
-        }
-
-
-        if(
-            ratio < 0.20 ||
-            ratio > 4.5
+            area <
+            imageArea * 0.006
         ){
 
             contour.delete();
@@ -1566,12 +2068,40 @@ function detectObjects(){
 
 
         /*
-         * Hindari object terlalu kecil
+         * Terlalu besar
          */
 
         if(
-            rect.width < 40 ||
-            rect.height < 40
+            area >
+            imageArea * 0.65
+        ){
+
+            contour.delete();
+
+            continue;
+
+        }
+
+
+        /*
+         * Bentuk sangat tipis
+         */
+
+        if(
+            ratio < 0.18 ||
+            ratio > 5
+        ){
+
+            contour.delete();
+
+            continue;
+
+        }
+
+
+        if(
+            rect.width < 35 ||
+            rect.height < 35
         ){
 
             contour.delete();
@@ -1601,28 +2131,23 @@ function detectObjects(){
     }
 
 
-    /*
-     * Hapus box yang tumpang tindih
-     */
-
     boxes =
         removeOverlaps(
             boxes
         );
 
 
-    /*
-     * Batasi jumlah maksimal
-     */
-
     boxes =
         boxes
         .sort(
             (a,b) =>
-                a.y - b.y ||
-                a.x - b.x
+                a.y-b.y ||
+                a.x-b.x
         )
-        .slice(0,50);
+        .slice(
+            0,
+            50
+        );
 
 
     src.delete();
@@ -1640,7 +2165,7 @@ function detectObjects(){
 
 
 /* =========================================================
-   DRAW COUNT BOXES
+   DRAW BOXES
    ========================================================= */
 
 function drawBoxes(boxes){
@@ -1651,8 +2176,12 @@ function drawBoxes(boxes){
     countCanvas.height =
         currentImage.height;
 
+
     const ctx =
-        countCanvas.getContext("2d");
+        countCanvas.getContext(
+            "2d"
+        );
+
 
     ctx.drawImage(
         currentImage,
@@ -1667,7 +2196,13 @@ function drawBoxes(boxes){
             ctx.strokeStyle =
                 "#00e676";
 
-            ctx.lineWidth = 4;
+            ctx.lineWidth =
+                Math.max(
+                    3,
+                    currentImage.width /
+                    500
+                );
+
 
             ctx.strokeRect(
                 box.x,
@@ -1677,15 +2212,13 @@ function drawBoxes(boxes){
             );
 
 
-            ctx.fillStyle =
-                "#00e676";
+            const label =
+                "#" +
+                (index+1);
+
 
             ctx.font =
                 "bold 24px Arial";
-
-
-            const label =
-                "#" + (index+1);
 
 
             const textWidth =
@@ -1694,12 +2227,20 @@ function drawBoxes(boxes){
                 ).width;
 
 
-            ctx.fillRect(
-                box.x,
+            const labelY =
                 Math.max(
                     0,
-                    box.y-30
-                ),
+                    box.y-32
+                );
+
+
+            ctx.fillStyle =
+                "#00e676";
+
+
+            ctx.fillRect(
+                box.x,
+                labelY,
                 textWidth+14,
                 30
             );
@@ -1708,13 +2249,11 @@ function drawBoxes(boxes){
             ctx.fillStyle =
                 "#000";
 
+
             ctx.fillText(
                 label,
                 box.x+7,
-                Math.max(
-                    22,
-                    box.y-8
-                )
+                labelY+22
             );
 
         }
@@ -1724,7 +2263,7 @@ function drawBoxes(boxes){
 
 
 /* =========================================================
-   COUNT WITH SMART FILTER
+   COUNT
    ========================================================= */
 
 function countObjects(){
@@ -1735,16 +2274,29 @@ function countObjects(){
 
     setProgress(50);
 
+
     const boxes =
         detectObjects();
 
-    drawBoxes(boxes);
+
+    drawBoxes(
+        boxes
+    );
+
 
     countCard.classList.remove(
         "hidden"
     );
 
-    setProgress(70);
+
+    document.getElementById(
+        "detectedObjectCount"
+    ).textContent =
+        boxes.length;
+
+
+    setProgress(72);
+
 
     return boxes;
 
@@ -1755,7 +2307,11 @@ function countObjects(){
    RESULT
    ========================================================= */
 
-function showResult(product,count){
+function showResult(
+    product,
+    count,
+    match
+){
 
     resultCard.classList.remove(
         "hidden"
@@ -1815,6 +2371,57 @@ function showResult(product,count){
 
     `;
 
+
+    document.getElementById(
+        "detectedProductCode"
+    ).textContent =
+        product.code;
+
+
+    document.getElementById(
+        "detectedProductSize"
+    ).textContent =
+        product.size;
+
+
+    document.getElementById(
+        "countInfo"
+    ).innerHTML = `
+
+        <strong>
+            ${count} sampel terdeteksi.
+        </strong>
+
+        <br><br>
+
+        Produk:
+        <strong>
+            ${product.name}
+        </strong>
+
+        <br>
+
+        Ukuran:
+        <strong>
+            ${product.size}
+        </strong>
+
+        <br>
+
+        Kode:
+        <strong>
+            ${product.code}
+        </strong>
+
+        <br><br>
+
+        OCR keyword:
+        <strong>
+            ${match.keywordHits}
+        </strong>
+
+    `;
+
 }
 
 
@@ -1847,7 +2454,8 @@ async function analyzeImage(){
 
 
         /*
-         * 1. IDENTIFIKASI PRODUK
+         * STEP 1
+         * IDENTIFIKASI
          */
 
         const identification =
@@ -1858,16 +2466,40 @@ async function analyzeImage(){
             identification.match;
 
 
+        /*
+         * V6.1:
+         * threshold lebih rendah.
+         */
+
         if(
             !match ||
-            match.score < 0.45
+            match.score < 0.30
         ){
 
             setProgress(0);
 
             setStatus(`
-                ❌ Produk belum dapat dikenali dengan cukup yakin.<br>
-                Pastikan tulisan nama produk dan ukuran terlihat jelas.
+
+                ❌ Produk belum terbaca.
+
+                <br><br>
+
+                Pastikan label produk terlihat jelas
+                dan ukuran produk ikut terlihat.
+
+                <br><br>
+
+                OCR membaca:
+
+                <strong>
+                    ${normalizeText(
+                        identification.text
+                    ).substring(
+                        0,
+                        200
+                    )}
+                </strong>
+
             `);
 
             return;
@@ -1879,15 +2511,27 @@ async function analyzeImage(){
             match.product;
 
 
-        setStatus(
-            `✅ Produk teridentifikasi:
-            <strong>${product.name}</strong>
-            ${product.size}`
-        );
+        setStatus(`
+
+            ✅ Produk dikenali:
+
+            <strong>
+                ${product.name}
+            </strong>
+
+            <br>
+
+            Ukuran:
+            <strong>
+                ${product.size}
+            </strong>
+
+        `);
 
 
         /*
-         * 2. COUNTING
+         * STEP 2
+         * COUNTING
          */
 
         const boxes =
@@ -1899,82 +2543,88 @@ async function analyzeImage(){
 
 
         /*
-         * Jika hanya satu objek
-         * dan contour tidak bagus,
-         * tetap minimal 1.
+         * Kalau contour tidak menemukan
+         * objek sama sekali.
          */
 
-        if(count === 0){
+        if(
+            count === 0
+        ){
+
+            /*
+             * Untuk satu sampel,
+             * jangan menghasilkan 0.
+             */
 
             count = 1;
 
+
+            const fullBox = {
+
+                x:
+                    currentImage.width *
+                    0.03,
+
+                y:
+                    currentImage.height *
+                    0.03,
+
+                width:
+                    currentImage.width *
+                    0.94,
+
+                height:
+                    currentImage.height *
+                    0.94,
+
+                area:
+                    currentImage.width *
+                    currentImage.height
+
+            };
+
+
             drawBoxes([
-
-                {
-                    x:10,
-                    y:10,
-                    width:
-                        currentImage.width-20,
-                    height:
-                        currentImage.height-20
-                }
-
+                fullBox
             ]);
 
         }
 
 
         /*
-         * 3. TAMPILKAN HASIL
+         * STEP 3
+         * HASIL
          */
 
         showResult(
             product,
-            count
+            count,
+            match
         );
-
-
-        document.getElementById(
-            "countInfo"
-        ).innerHTML = `
-
-            <strong>
-                ${count} objek terdeteksi.
-            </strong>
-
-            <br>
-
-            Produk yang digunakan untuk
-            counting:
-
-            <strong>
-                ${product.name}
-                ${product.size}
-            </strong>
-
-            <br><br>
-
-            Kotak hijau = objek yang dihitung.
-
-            <br>
-
-            <strong>
-                Catatan:
-            </strong>
-            Counting berbasis bentuk/contour
-            sehingga hasil paling baik jika
-            sampel tidak saling menutupi.
-
-        `;
 
 
         setProgress(100);
 
-        setStatus(
-            `✅ Analisis selesai.
-             Produk: <strong>${product.name}</strong>.
-             Jumlah: <strong>${count} PCS</strong>.`
-        );
+
+        setStatus(`
+
+            ✅ Analisis selesai.
+
+            <br>
+
+            Produk:
+            <strong>
+                ${product.name}
+            </strong>
+
+            <br>
+
+            Jumlah:
+            <strong>
+                ${count} PCS
+            </strong>
+
+        `);
 
 
     }catch(error){
@@ -1984,8 +2634,8 @@ async function analyzeImage(){
         setProgress(0);
 
         setStatus(
-            "❌ Terjadi kesalahan saat analisis: "
-            + error.message
+            "❌ Terjadi kesalahan: " +
+            error.message
         );
 
     }
@@ -2001,9 +2651,11 @@ function resetAll(){
 
     if(stream){
 
-        stream.getTracks().forEach(
-            track => track.stop()
-        );
+        stream.getTracks()
+            .forEach(
+                track =>
+                    track.stop()
+            );
 
         stream = null;
 
@@ -2045,18 +2697,8 @@ function resetAll(){
     ).value = "";
 
 
-    const ctx =
-        photoCanvas.getContext("2d");
-
-    ctx.clearRect(
-        0,
-        0,
-        photoCanvas.width,
-        photoCanvas.height
-    );
-
-
     setProgress(0);
+
 
     setStatus(
         "Siap. Ambil foto atau upload foto."
