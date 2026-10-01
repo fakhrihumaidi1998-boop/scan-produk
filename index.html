@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Scan Produk V8 - Universal</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
@@ -44,8 +43,7 @@ button,label{
 input{display:none}
 
 #view,
-#overlay,
-#video{
+#overlay{
   width:100%;
   max-height:560px;
   object-fit:contain;
@@ -55,6 +53,14 @@ input{display:none}
 }
 
 #overlay{display:none}
+
+#video{
+  width:100%;
+  max-height:560px;
+  background:#111;
+  border-radius:14px;
+  margin-top:12px
+}
 
 #status{
   background:#eef3f7;
@@ -167,6 +173,7 @@ Memuat model...
 
 </div>
 
+
 <script>
 
 /*
@@ -178,7 +185,9 @@ ALUR:
 
 FOTO
  ↓
-DETEKSI SETIAP UNIT
+YOLO ONNX
+ ↓
+DETEKSI SETIAP sample_product
  ↓
 CROP MASING-MASING UNIT
  ↓
@@ -188,23 +197,35 @@ IDENTIFIKASI PRODUK
  ↓
 JUMLAH UNIT
 
-TARGET MODEL UNIVERSAL:
+Semua bentuk packaging dianggap:
 
 sample_product
 
-Bukan:
+Contoh:
+- bottle
+- tube
+- box
+- sachet
+- pouch
+- blister
+- kemasan lainnya
 
-bottle
-tube
-box
-sachet
-
-Karena semua bentuk kemasan dianggap satu unit produk.
 ==========================================================
 */
 
 
-const CUSTOM_MODEL_URL="./model/model.json";
+/*
+==========================================================
+MODEL ONNX
+==========================================================
+*/
+
+const CUSTOM_MODEL_URL =
+  "./model/sample_product.onnx";
+
+const MODEL_SIZE = 640;
+
+const CONF_THRESHOLD = 0.35;
 
 
 /*
@@ -213,23 +234,23 @@ PRODUCT MASTER
 ==========================================================
 */
 
-const PRODUCTS=[
+const PRODUCTS = [
 
- {
-   code:"P0008",
+  {
+    code:"P0008",
 
-   name:"BETADINE MOUTHWASH AND GARGLE",
+    name:"BETADINE MOUTHWASH AND GARGLE",
 
-   size:"100 ML",
+    size:"100 ML",
 
-   aliases:[
-     "BETADINE",
-     "MOUTHWASH",
-     "GARGLE",
-     "POVIDONE IODINE",
-     "POVIDONE"
-   ]
- }
+    aliases:[
+      "BETADINE",
+      "MOUTHWASH",
+      "GARGLE",
+      "POVIDONE IODINE",
+      "POVIDONE"
+    ]
+  }
 
 ];
 
@@ -240,10 +261,11 @@ VARIABLE
 ==========================================================
 */
 
-let customModel=null;
-let coco=null;
-let stream=null;
-let current=null;
+let customModel = null;
+
+let stream = null;
+
+let current = null;
 
 
 /*
@@ -252,17 +274,17 @@ ELEMENT
 ==========================================================
 */
 
-const video=
-document.querySelector("#video");
+const video =
+  document.querySelector("#video");
 
-const view=
-document.querySelector("#view");
+const view =
+  document.querySelector("#view");
 
-const canvas=
-document.querySelector("#overlay");
+const canvas =
+  document.querySelector("#overlay");
 
-const status=
-document.querySelector("#status");
+const status =
+  document.querySelector("#status");
 
 
 /*
@@ -273,9 +295,9 @@ STATUS
 
 function msg(text,cls=""){
 
-  status.textContent=text;
+  status.textContent = text;
 
-  status.className=cls;
+  status.className = cls;
 
 }
 
@@ -305,36 +327,43 @@ IDENTIFY PRODUCT
 
 function identify(text){
 
-  const t=norm(text);
+  const t = norm(text);
 
-  let best=null;
-  let score=0;
+  let best = null;
+
+  let score = 0;
 
   for(const p of PRODUCTS){
 
-    let s=0;
+    let s = 0;
 
     if(t.includes(norm(p.name))){
-      s=.95;
+
+      s = .95;
+
     }
 
     for(const alias of p.aliases){
 
       if(t.includes(norm(alias))){
 
-        s=Math.max(
+        s = Math.max(
           s,
-          .55 + Math.min(alias.length/100,.35)
+          .55 + Math.min(
+            alias.length / 100,
+            .35
+          )
         );
 
       }
 
     }
 
-    if(s>score){
+    if(s > score){
 
-      score=s;
-      best=p;
+      score = s;
+
+      best = p;
 
     }
 
@@ -357,12 +386,15 @@ SIZE
 function sizeOf(text,p){
 
   if(p?.size){
+
     return p.size;
+
   }
 
-  const m=norm(text).match(
-    /\b(\d+(?:[.,]\d+)?)\s*(ML|L|MG|G|KG|MCG|PCS|TAB|TABLET)\b/
-  );
+  const m =
+    norm(text).match(
+      /\b(\d+(?:[.,]\d+)?)\s*(ML|L|MG|G|KG|MCG|PCS|TAB|TABLET)\b/
+    );
 
   return m
     ? m[1]+" "+m[2]
@@ -379,39 +411,52 @@ IOU
 
 function iou(a,b){
 
-  const x=Math.max(
-    0,
-    Math.min(
-      a[0]+a[2],
-      b[0]+b[2]
-    )
-    -
-    Math.max(a[0],b[0])
-  );
+  const x =
+    Math.max(
+      0,
+      Math.min(
+        a[0]+a[2],
+        b[0]+b[2]
+      )
+      -
+      Math.max(
+        a[0],
+        b[0]
+      )
+    );
 
-  const y=Math.max(
-    0,
-    Math.min(
-      a[1]+a[3],
-      b[1]+b[3]
-    )
-    -
-    Math.max(a[1],b[1])
-  );
+  const y =
+    Math.max(
+      0,
+      Math.min(
+        a[1]+a[3],
+        b[1]+b[3]
+      )
+      -
+      Math.max(
+        a[1],
+        b[1]
+      )
+    );
 
-  const inter=x*y;
+  const inter = x*y;
 
-  const areaA=a[2]*a[3];
+  const areaA =
+    a[2]*a[3];
 
-  const areaB=b[2]*b[3];
+  const areaB =
+    b[2]*b[3];
 
-  const union=
+  const union =
     areaA+
     areaB-
     inter;
 
-  return inter/
-    Math.max(1,union);
+  return inter /
+    Math.max(
+      1,
+      union
+    );
 
 }
 
@@ -425,16 +470,21 @@ REMOVE DUPLICATE BOX
 function dedupe(ds){
 
   ds.sort(
-    (a,b)=>b.score-a.score
+    (a,b)=>
+      b.score-a.score
   );
 
-  const out=[];
+  const out = [];
 
   for(const d of ds){
 
     if(
       !out.some(
-        x=>iou(x.bbox,d.bbox)>.5
+        x =>
+          iou(
+            x.bbox,
+            d.bbox
+          ) > .5
       )
     ){
 
@@ -451,89 +501,406 @@ function dedupe(ds){
 
 /*
 ==========================================================
-CUSTOM UNIVERSAL MODEL
+YOLO ONNX DETECTION
 ==========================================================
 
-Model universal harus mendeteksi:
+MODEL:
 
-sample_product
+Input:
+1 x 3 x 640 x 640
 
-Format internal:
+Output:
+1 x 300 x 6
 
-{
- bbox:[x,y,width,height],
- score:0.0-1.0,
- class:"sample_product"
-}
+Format:
 
-FORMAT OUTPUT MODEL TRAINING BERBEDA-BEDA.
+[x1,y1,x2,y2,confidence,class]
 
-Jadi fungsi ini nanti disesuaikan dengan model
-yang digunakan.
 ==========================================================
 */
 
 async function detectCustom(img){
 
-  /*
-  ========================================================
-  BAGIAN INI AKAN DIISI SESUAI MODEL UNIVERSAL.
+  if(!customModel){
 
-  Jangan dipaksa memakai output COCO-SSD.
-
-  Kalau model YOLO/TensorFlow.js sudah tersedia,
-  adapter-nya bisa dibuat khusus.
-  ========================================================
-  */
-
-  throw new Error(
-    "CUSTOM_MODEL_ADAPTER_NOT_CONFIGURED"
-  );
-
-}
-
-
-/*
-==========================================================
-COCO FALLBACK
-==========================================================
-
-HANYA FALLBACK.
-
-COCO-SSD TIDAK DIANGGAP UNIVERSAL.
-
-Untuk sementara hanya bottle.
-==========================================================
-*/
-
-async function detectFallback(img){
-
-  if(!coco){
-    return [];
-  }
-
-  const predictions=
-    await coco.detect(
-      img,
-      50,
-      .20
+    throw new Error(
+      "MODEL_NOT_LOADED"
     );
 
-  return predictions
+  }
 
-    .filter(
-      x=>x.class==="bottle"
-    )
 
-    .map(x=>({
+  const W =
+    img.naturalWidth ||
+    img.videoWidth ||
+    img.width;
 
-      bbox:x.bbox,
 
-      score:x.score,
+  const H =
+    img.naturalHeight ||
+    img.videoHeight ||
+    img.height;
 
-      class:"sample_product"
 
-    }));
+  /*
+  --------------------------------------------------------
+  LETTERBOX
+  --------------------------------------------------------
+  */
+
+  const scale =
+    Math.min(
+      MODEL_SIZE / W,
+      MODEL_SIZE / H
+    );
+
+
+  const newW =
+    Math.round(
+      W * scale
+    );
+
+
+  const newH =
+    Math.round(
+      H * scale
+    );
+
+
+  const padX =
+    (MODEL_SIZE-newW)/2;
+
+
+  const padY =
+    (MODEL_SIZE-newH)/2;
+
+
+  const c =
+    document.createElement(
+      "canvas"
+    );
+
+
+  c.width =
+    MODEL_SIZE;
+
+  c.height =
+    MODEL_SIZE;
+
+
+  const ctx =
+    c.getContext(
+      "2d",
+      {
+        willReadFrequently:true
+      }
+    );
+
+
+  /*
+  --------------------------------------------------------
+  YOLO BACKGROUND
+  --------------------------------------------------------
+  */
+
+  ctx.fillStyle =
+    "rgb(114,114,114)";
+
+
+  ctx.fillRect(
+    0,
+    0,
+    MODEL_SIZE,
+    MODEL_SIZE
+  );
+
+
+  ctx.drawImage(
+    img,
+    0,
+    0,
+    W,
+    H,
+    padX,
+    padY,
+    newW,
+    newH
+  );
+
+
+  /*
+  --------------------------------------------------------
+  IMAGE DATA
+  --------------------------------------------------------
+  */
+
+  const data =
+    ctx.getImageData(
+      0,
+      0,
+      MODEL_SIZE,
+      MODEL_SIZE
+    ).data;
+
+
+  const input =
+    new Float32Array(
+      3 *
+      MODEL_SIZE *
+      MODEL_SIZE
+    );
+
+
+  const area =
+    MODEL_SIZE *
+    MODEL_SIZE;
+
+
+  /*
+  --------------------------------------------------------
+  HWC -> CHW
+  --------------------------------------------------------
+  */
+
+  for(
+    let i=0;
+    i<area;
+    i++
+  ){
+
+    input[i] =
+      data[i*4] / 255;
+
+
+    input[area+i] =
+      data[i*4+1] / 255;
+
+
+    input[2*area+i] =
+      data[i*4+2] / 255;
+
+  }
+
+
+  /*
+  --------------------------------------------------------
+  ONNX INPUT
+  --------------------------------------------------------
+  */
+
+  const inputName =
+    customModel.inputNames[0];
+
+
+  const tensor =
+    new ort.Tensor(
+      "float32",
+      input,
+      [
+        1,
+        3,
+        MODEL_SIZE,
+        MODEL_SIZE
+      ]
+    );
+
+
+  /*
+  --------------------------------------------------------
+  RUN MODEL
+  --------------------------------------------------------
+  */
+
+  const outputs =
+    await customModel.run({
+
+      [inputName]:
+        tensor
+
+    });
+
+
+  const output =
+    outputs[
+      customModel.outputNames[0]
+    ];
+
+
+  const a =
+    output.data;
+
+
+  const dims =
+    output.dims;
+
+
+  /*
+  --------------------------------------------------------
+  CHECK OUTPUT
+  --------------------------------------------------------
+  */
+
+  if(
+    !dims ||
+    dims.length !== 3 ||
+    dims[0] !== 1 ||
+    dims[2] !== 6
+  ){
+
+    throw new Error(
+      "OUTPUT_SHAPE_TIDAK_DIDUKUNG: "+
+      JSON.stringify(dims)
+    );
+
+  }
+
+
+  /*
+  --------------------------------------------------------
+  DECODE
+  --------------------------------------------------------
+  */
+
+  const detections = [];
+
+
+  for(
+    let i=0;
+    i<dims[1];
+    i++
+  ){
+
+    const o =
+      i*6;
+
+
+    const x1 =
+      a[o];
+
+
+    const y1 =
+      a[o+1];
+
+
+    const x2 =
+      a[o+2];
+
+
+    const y2 =
+      a[o+3];
+
+
+    const score =
+      a[o+4];
+
+
+    const cls =
+      a[o+5];
+
+
+    /*
+    ------------------------------------------------------
+    CONFIDENCE
+    ------------------------------------------------------
+    */
+
+    if(
+      score <
+      CONF_THRESHOLD
+    ){
+
+      continue;
+
+    }
+
+
+    /*
+    ------------------------------------------------------
+    ONLY CLASS 0
+    ------------------------------------------------------
+    */
+
+    if(
+      cls < 0
+    ){
+
+      continue;
+
+    }
+
+
+    /*
+    ------------------------------------------------------
+    CONVERT BACK TO ORIGINAL IMAGE
+    ------------------------------------------------------
+    */
+
+    const bx1 =
+      Math.max(
+        0,
+        (x1-padX)/scale
+      );
+
+
+    const by1 =
+      Math.max(
+        0,
+        (y1-padY)/scale
+      );
+
+
+    const bx2 =
+      Math.min(
+        W,
+        (x2-padX)/scale
+      );
+
+
+    const by2 =
+      Math.min(
+        H,
+        (y2-padY)/scale
+      );
+
+
+    const bw =
+      bx2-bx1;
+
+
+    const bh =
+      by2-by1;
+
+
+    if(
+      bw <= 2 ||
+      bh <= 2
+    ){
+
+      continue;
+
+    }
+
+
+    detections.push({
+
+      bbox:[
+        bx1,
+        by1,
+        bw,
+        bh
+      ],
+
+      score,
+
+      class:
+        "sample_product"
+
+    });
+
+  }
+
+
+  return detections;
 
 }
 
@@ -551,11 +918,13 @@ function source(){
     video.videoWidth
   ){
 
-    canvas.width=
+    canvas.width =
       video.videoWidth;
 
-    canvas.height=
+
+    canvas.height =
       video.videoHeight;
+
 
     canvas
       .getContext("2d")
@@ -565,15 +934,18 @@ function source(){
         0
       );
 
+
     return canvas;
 
   }
+
 
   if(current){
 
     return current;
 
   }
+
 
   throw new Error(
     "Belum ada foto"
@@ -599,59 +971,60 @@ function crop(
     y,
     w,
     h
-  ]=bbox;
+  ] = bbox;
 
 
-  const W=
+  const W =
     img.naturalWidth ||
     img.videoWidth ||
     img.width;
 
 
-  const H=
+  const H =
     img.naturalHeight ||
     img.videoHeight ||
     img.height;
 
 
-  const x1=
+  const x1 =
     Math.max(
       0,
       x-w*padding
     );
 
 
-  const y1=
+  const y1 =
     Math.max(
       0,
       y-h*padding
     );
 
 
-  const x2=
+  const x2 =
     Math.min(
       W,
       x+w+w*padding
     );
 
 
-  const y2=
+  const y2 =
     Math.min(
       H,
       y+h+h*padding
     );
 
 
-  const c=
+  const c =
     document.createElement(
       "canvas"
     );
 
 
-  c.width=
+  c.width =
     x2-x1;
 
-  c.height=
+
+  c.height =
     y2-y1;
 
 
@@ -680,21 +1053,27 @@ DRAW DETECTIONS
 ==========================================================
 */
 
-function draw(img,ds){
+function draw(
+  img,
+  ds
+){
 
-  canvas.width=
+  canvas.width =
     img.naturalWidth ||
     img.videoWidth ||
     img.width;
 
-  canvas.height=
+
+  canvas.height =
     img.naturalHeight ||
     img.videoHeight ||
     img.height;
 
 
-  const c=
-    canvas.getContext("2d");
+  const c =
+    canvas.getContext(
+      "2d"
+    );
 
 
   c.drawImage(
@@ -706,15 +1085,18 @@ function draw(img,ds){
   );
 
 
-  c.strokeStyle=
+  c.strokeStyle =
     "#00ff66";
 
-  c.fillStyle=
+
+  c.fillStyle =
     "#00ff66";
 
-  c.lineWidth=4;
 
-  c.font=
+  c.lineWidth = 4;
+
+
+  c.font =
     "bold 22px Arial";
 
 
@@ -726,7 +1108,7 @@ function draw(img,ds){
         y,
         w,
         h
-      ]=d.bbox;
+      ] = d.bbox;
 
 
       c.strokeRect(
@@ -755,10 +1137,11 @@ function draw(img,ds){
   );
 
 
-  canvas.style.display=
+  canvas.style.display =
     "block";
 
-  view.style.display=
+
+  view.style.display =
     "none";
 
 }
@@ -772,7 +1155,7 @@ OCR
 
 async function ocr(c){
 
-  const result=
+  const result =
     await Tesseract.recognize(
       c,
       "eng",
@@ -781,7 +1164,7 @@ async function ocr(c){
         logger:x=>{
 
           if(
-            x.status===
+            x.status ===
             "recognizing text"
           ){
 
@@ -814,11 +1197,11 @@ CAMERA
 
 document.querySelector(
   "#cam"
-).onclick=async()=>{
+).onclick = async()=>{
 
   try{
 
-    stream=
+    stream =
       await navigator.mediaDevices
         .getUserMedia({
 
@@ -833,13 +1216,15 @@ document.querySelector(
         });
 
 
-    video.srcObject=
+    video.srcObject =
       stream;
 
-    video.style.display=
+
+    video.style.display =
       "block";
 
-    view.style.display=
+
+    view.style.display =
       "none";
 
 
@@ -870,7 +1255,7 @@ STOP CAMERA
 
 document.querySelector(
   "#stop"
-).onclick=()=>{
+).onclick = ()=>{
 
   if(stream){
 
@@ -880,11 +1265,13 @@ document.querySelector(
         t=>t.stop()
       );
 
-    stream=null;
+
+    stream = null;
 
   }
 
-  video.style.display=
+
+  video.style.display =
     "none";
 
 };
@@ -898,28 +1285,36 @@ UPLOAD
 
 document.querySelector(
   "#file"
-).onchange=e=>{
+).onchange = e=>{
 
-  const file=
+  const file =
     e.target.files[0];
 
+
   if(!file){
+
     return;
+
   }
 
 
-  const url=
-    URL.createObjectURL(file);
+  const url =
+    URL.createObjectURL(
+      file
+    );
 
 
-  view.onload=()=>{
+  view.onload = ()=>{
 
-    current=view;
+    current =
+      view;
 
-    view.style.display=
+
+    view.style.display =
       "block";
 
-    video.style.display=
+
+    video.style.display =
       "none";
 
 
@@ -931,7 +1326,8 @@ document.querySelector(
   };
 
 
-  view.src=url;
+  view.src =
+    url;
 
 };
 
@@ -944,31 +1340,31 @@ SCAN
 
 document.querySelector(
   "#scan"
-).onclick=async()=>{
+).onclick = async()=>{
 
   try{
 
     document.querySelector(
       "#units"
-    ).innerHTML="";
+    ).innerHTML = "";
 
 
     document.querySelector(
       "#prod"
-    ).textContent="-";
+    ).textContent = "-";
 
 
     document.querySelector(
       "#size"
-    ).textContent="-";
+    ).textContent = "-";
 
 
     document.querySelector(
       "#count"
-    ).textContent="0";
+    ).textContent = "0";
 
 
-    const img=
+    const img =
       source();
 
 
@@ -977,55 +1373,41 @@ document.querySelector(
     );
 
 
-    let detections=[];
+    let detections = [];
 
 
     /*
     ======================================================
-    PRIORITAS MODEL UNIVERSAL
+    MODEL UNIVERSAL
     ======================================================
     */
 
     if(customModel){
 
-      try{
-
-        detections=
-          await detectCustom(img);
-
-      }catch(e){
-
-        console.error(e);
-
-        msg(
-          "Model universal sudah ada,\n"+
-          "tetapi adapter output model belum disesuaikan.\n\n"+
-          "Kirim model hasil training agar bagian detector "+
-          "bisa saya sesuaikan.",
-          "warn"
+      detections =
+        await detectCustom(
+          img
         );
-
-        return;
-
-      }
-
 
     }else{
 
-      /*
-      ====================================================
-      FALLBACK
-      ====================================================
-      */
-
-      detections=
-        await detectFallback(img);
+      throw new Error(
+        "Model universal belum dimuat."
+      );
 
     }
 
 
-    detections=
-      dedupe(detections);
+    /*
+    ======================================================
+    REMOVE DUPLICATE
+    ======================================================
+    */
+
+    detections =
+      dedupe(
+        detections
+      );
 
 
     /*
@@ -1034,12 +1416,14 @@ document.querySelector(
     ======================================================
     */
 
-    if(!detections.length){
+    if(
+      !detections.length
+    ){
 
       msg(
         "Tidak ada unit terdeteksi.\n\n"+
-        "Untuk kemasan universal diperlukan "+
-        "model sample_product.",
+        "Coba foto dengan pencahayaan lebih baik "+
+        "dan produk terlihat jelas.",
         "warn"
       );
 
@@ -1050,7 +1434,7 @@ document.querySelector(
 
     /*
     ======================================================
-    DRAW BOX
+    DRAW
     ======================================================
     */
 
@@ -1068,7 +1452,7 @@ document.querySelector(
 
     document.querySelector(
       "#count"
-    ).textContent=
+    ).textContent =
       detections.length;
 
 
@@ -1078,7 +1462,7 @@ document.querySelector(
     ======================================================
     */
 
-    let allText="";
+    let allText = "";
 
 
     for(
@@ -1087,35 +1471,35 @@ document.querySelector(
       i++
     ){
 
-      const unitCrop=
+      const unitCrop =
         crop(
           img,
           detections[i].bbox
         );
 
 
-      const text=
+      const text =
         await ocr(
           unitCrop
         );
 
 
-      allText+=
+      allText +=
         "\n"+
         text;
 
 
-      const div=
+      const div =
         document.createElement(
           "div"
         );
 
 
-      div.className=
+      div.className =
         "unit";
 
 
-      div.innerHTML=
+      div.innerHTML =
         "<b>Unit "+
         (i+1)+
         "</b><br>"+
@@ -1127,7 +1511,9 @@ document.querySelector(
 
       document.querySelector(
         "#units"
-      ).appendChild(div);
+      ).appendChild(
+        div
+      );
 
     }
 
@@ -1138,23 +1524,25 @@ document.querySelector(
     ======================================================
     */
 
-    const result=
+    const result =
       identify(
         allText
       );
 
 
-    if(result.product){
+    if(
+      result.product
+    ){
 
       document.querySelector(
         "#prod"
-      ).textContent=
+      ).textContent =
         result.product.name;
 
 
       document.querySelector(
         "#size"
-      ).textContent=
+      ).textContent =
         sizeOf(
           allText,
           result.product
@@ -1181,12 +1569,11 @@ document.querySelector(
 
       );
 
-
     }else{
 
       document.querySelector(
         "#size"
-      ).textContent=
+      ).textContent =
         sizeOf(
           allText,
           null
@@ -1212,6 +1599,7 @@ document.querySelector(
 
     console.error(e);
 
+
     msg(
       "Scan gagal: "+
       e.message,
@@ -1225,74 +1613,74 @@ document.querySelector(
 
 /*
 ==========================================================
-LOAD MODELS
+LOAD ONNX MODEL
 ==========================================================
 */
 
 (async()=>{
 
-  await tf.ready();
-
-
-  /*
-  ========================================================
-  COCO FALLBACK
-  ========================================================
-  */
-
   try{
 
-    coco=
-      await cocoSsd.load({
-        base:"lite_mobilenet_v2"
-      });
+    if(!window.ort){
 
-  }catch(e){
+      throw new Error(
+        "ONNX Runtime Web tidak termuat."
+      );
 
-    console.warn(
-      "COCO gagal:",
-      e
-    );
-
-  }
+    }
 
 
-  /*
-  ========================================================
-  CUSTOM UNIVERSAL MODEL
-  ========================================================
-  */
+    /*
+    ------------------------------------------------------
+    WASM
+    ------------------------------------------------------
+    */
 
-  try{
+    ort.env.wasm.numThreads = 1;
 
-    customModel=
-      await tf.loadGraphModel(
-        CUSTOM_MODEL_URL
+    ort.env.wasm.simd = true;
+
+
+    /*
+    ------------------------------------------------------
+    LOAD MODEL
+    ------------------------------------------------------
+    */
+
+    customModel =
+      await ort.InferenceSession.create(
+        CUSTOM_MODEL_URL,
+        {
+          executionProviders:[
+            "wasm"
+          ]
+        }
       );
 
 
     msg(
 
-      "Model universal ditemukan.\n"+
-      "Adapter output perlu disesuaikan "+
-      "dengan format model.",
+      "Model universal ONNX siap.\n"+
+      "Siap mendeteksi sample_product.",
 
-      "warn"
+      "ok"
 
     );
 
 
   }catch(e){
 
+    console.error(e);
+
+
     msg(
 
-      "Sistem siap.\n\n"+
-      "Belum ada model universal.\n"+
-      "Mode sementara hanya mengenali bottle.\n\n"+
-      "Target model final:\n"+
-      "sample_product",
+      "Model universal gagal dimuat.\n\n"+
+      "Pastikan file berada di:\n"+
+      "model/sample_product.onnx\n\n"+
+      e.message,
 
-      "warn"
+      "err"
 
     );
 
