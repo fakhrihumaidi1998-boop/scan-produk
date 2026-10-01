@@ -3,12 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>Scan Produk V8 - Universal</title>
 
+<!-- ONNX Runtime Web -->
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+
+<!-- OCR -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
+
 body{
   margin:0;
   background:#f3f5f7;
@@ -26,9 +31,12 @@ body{
   box-shadow:0 8px 28px #0001
 }
 
-h2{margin-top:0}
+h2{
+  margin-top:0
+}
 
-button,label{
+button,
+label{
   border:0;
   border-radius:11px;
   padding:12px 15px;
@@ -40,10 +48,13 @@ button,label{
   margin:4px
 }
 
-input{display:none}
+input{
+  display:none
+}
 
 #view,
-#overlay{
+#overlay,
+#video{
   width:100%;
   max-height:560px;
   object-fit:contain;
@@ -52,14 +63,8 @@ input{display:none}
   margin-top:12px
 }
 
-#overlay{display:none}
-
-#video{
-  width:100%;
-  max-height:560px;
-  background:#111;
-  border-radius:14px;
-  margin-top:12px
+#overlay{
+  display:none
 }
 
 #status{
@@ -100,17 +105,29 @@ input{display:none}
   margin-top:7px
 }
 
-.ok{color:#146c38}
-.warn{color:#946000}
-.err{color:#a0182b}
+.ok{
+  color:#146c38
+}
+
+.warn{
+  color:#946000
+}
+
+.err{
+  color:#a0182b
+}
 
 @media(max-width:600px){
+
   .grid{
     grid-template-columns:1fr
   }
+
 }
+
 </style>
 </head>
+
 
 <body>
 
@@ -122,16 +139,26 @@ input{display:none}
 Multi-product • OCR per unit • Universal Packaging
 </p>
 
-<button id="cam">📷 Kamera</button>
+<button id="cam">
+📷 Kamera
+</button>
 
 <label>
 🖼️ Upload
-<input id="file" type="file" accept="image/*">
+<input
+  id="file"
+  type="file"
+  accept="image/*">
 </label>
 
-<button id="stop">⏹ Stop</button>
+<button id="stop">
+⏹ Stop
+</button>
 
-<button id="scan">🔎 Scan</button>
+<button id="scan">
+🔎 Scan
+</button>
+
 
 <video
   id="video"
@@ -140,34 +167,41 @@ Multi-product • OCR per unit • Universal Packaging
   style="display:none">
 </video>
 
+
 <img
   id="view"
   style="display:none">
 
-<canvas id="overlay"></canvas>
+
+<canvas
+  id="overlay">
+</canvas>
+
 
 <div id="status">
 Memuat model...
 </div>
 
+
 <div class="grid">
 
-<div class="box">
-<small>PRODUK</small>
-<b id="prod">-</b>
+  <div class="box">
+    <small>PRODUK</small>
+    <b id="prod">-</b>
+  </div>
+
+  <div class="box">
+    <small>SIZE</small>
+    <b id="size">-</b>
+  </div>
+
+  <div class="box">
+    <small>JUMLAH</small>
+    <b id="count">0</b>
+  </div>
+
 </div>
 
-<div class="box">
-<small>SIZE</small>
-<b id="size">-</b>
-</div>
-
-<div class="box">
-<small>JUMLAH</small>
-<b id="count">0</b>
-</div>
-
-</div>
 
 <div id="units"></div>
 
@@ -178,37 +212,34 @@ Memuat model...
 
 /*
 ==========================================================
-V8 UNIVERSAL SAMPLE COUNTER
+SCAN PRODUK V8
+UNIVERSAL SAMPLE PRODUCT
 ==========================================================
 
 ALUR:
 
 FOTO
  ↓
-YOLO ONNX
+YOLO26 ONNX
  ↓
-DETEKSI SETIAP sample_product
+DETEKSI sample_product
  ↓
-CROP MASING-MASING UNIT
+CROP PER UNIT
  ↓
-OCR PER UNIT
+OCR
  ↓
 IDENTIFIKASI PRODUK
  ↓
-JUMLAH UNIT
+JUMLAH
 
-Semua bentuk packaging dianggap:
+Model:
+sample_product.onnx
 
-sample_product
+Output:
+(1, 300, 6)
 
-Contoh:
-- bottle
-- tube
-- box
-- sachet
-- pouch
-- blister
-- kemasan lainnya
+Format:
+[x1, y1, x2, y2, confidence, class]
 
 ==========================================================
 */
@@ -216,16 +247,20 @@ Contoh:
 
 /*
 ==========================================================
-MODEL ONNX
+MODEL
 ==========================================================
 */
 
 const CUSTOM_MODEL_URL =
   "./model/sample_product.onnx";
 
-const MODEL_SIZE = 640;
 
-const CONF_THRESHOLD = 0.35;
+const MODEL_SIZE =
+  640;
+
+
+const CONF_THRESHOLD =
+  0.35;
 
 
 /*
@@ -250,6 +285,7 @@ const PRODUCTS = [
       "POVIDONE IODINE",
       "POVIDONE"
     ]
+
   }
 
 ];
@@ -277,11 +313,14 @@ ELEMENT
 const video =
   document.querySelector("#video");
 
+
 const view =
   document.querySelector("#view");
 
+
 const canvas =
   document.querySelector("#overlay");
+
 
 const status =
   document.querySelector("#status");
@@ -293,28 +332,41 @@ STATUS
 ==========================================================
 */
 
-function msg(text,cls=""){
+function msg(
+  text,
+  cls=""
+){
 
-  status.textContent = text;
+  status.textContent =
+    text;
 
-  status.className = cls;
+  status.className =
+    cls;
 
 }
 
 
 /*
 ==========================================================
-NORMALIZE OCR
+NORMALIZE
 ==========================================================
 */
 
 function norm(text){
 
-  return (text || "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9 ]/g," ")
-    .replace(/\s+/g," ")
-    .trim();
+  return (
+    text || ""
+  )
+  .toUpperCase()
+  .replace(
+    /[^A-Z0-9 ]/g,
+    " "
+  )
+  .replace(
+    /\s+/g,
+    " "
+  )
+  .trim();
 
 }
 
@@ -327,39 +379,61 @@ IDENTIFY PRODUCT
 
 function identify(text){
 
-  const t = norm(text);
+  const t =
+    norm(text);
+
 
   let best = null;
 
   let score = 0;
 
-  for(const p of PRODUCTS){
+
+  for(
+    const p of PRODUCTS
+  ){
 
     let s = 0;
 
-    if(t.includes(norm(p.name))){
+
+    if(
+      t.includes(
+        norm(p.name)
+      )
+    ){
 
       s = .95;
 
     }
 
-    for(const alias of p.aliases){
 
-      if(t.includes(norm(alias))){
+    for(
+      const alias of p.aliases
+    ){
 
-        s = Math.max(
-          s,
-          .55 + Math.min(
-            alias.length / 100,
-            .35
-          )
-        );
+      if(
+        t.includes(
+          norm(alias)
+        )
+      ){
+
+        s =
+          Math.max(
+            s,
+            .55 +
+            Math.min(
+              alias.length / 100,
+              .35
+            )
+          );
 
       }
 
     }
 
-    if(s > score){
+
+    if(
+      s > score
+    ){
 
       score = s;
 
@@ -368,6 +442,7 @@ function identify(text){
     }
 
   }
+
 
   return {
     product:best,
@@ -383,18 +458,25 @@ SIZE
 ==========================================================
 */
 
-function sizeOf(text,p){
+function sizeOf(
+  text,
+  p
+){
 
-  if(p?.size){
+  if(
+    p?.size
+  ){
 
     return p.size;
 
   }
 
+
   const m =
     norm(text).match(
       /\b(\d+(?:[.,]\d+)?)\s*(ML|L|MG|G|KG|MCG|PCS|TAB|TABLET)\b/
     );
+
 
   return m
     ? m[1]+" "+m[2]
@@ -409,7 +491,10 @@ IOU
 ==========================================================
 */
 
-function iou(a,b){
+function iou(
+  a,
+  b
+){
 
   const x =
     Math.max(
@@ -425,6 +510,7 @@ function iou(a,b){
       )
     );
 
+
   const y =
     Math.max(
       0,
@@ -439,44 +525,59 @@ function iou(a,b){
       )
     );
 
-  const inter = x*y;
+
+  const inter =
+    x*y;
+
 
   const areaA =
     a[2]*a[3];
 
+
   const areaB =
     b[2]*b[3];
 
+
   const union =
-    areaA+
-    areaB-
+    areaA +
+    areaB -
     inter;
 
-  return inter /
+
+  return (
+    inter /
     Math.max(
       1,
       union
-    );
+    )
+  );
 
 }
 
 
 /*
 ==========================================================
-REMOVE DUPLICATE BOX
+DEDUPE
 ==========================================================
 */
 
-function dedupe(ds){
+function dedupe(
+  ds
+){
 
   ds.sort(
     (a,b)=>
-      b.score-a.score
+      b.score -
+      a.score
   );
+
 
   const out = [];
 
-  for(const d of ds){
+
+  for(
+    const d of ds
+  ){
 
     if(
       !out.some(
@@ -494,6 +595,7 @@ function dedupe(ds){
 
   }
 
+
   return out;
 
 }
@@ -501,27 +603,17 @@ function dedupe(ds){
 
 /*
 ==========================================================
-YOLO ONNX DETECTION
-==========================================================
-
-MODEL:
-
-Input:
-1 x 3 x 640 x 640
-
-Output:
-1 x 300 x 6
-
-Format:
-
-[x1,y1,x2,y2,confidence,class]
-
+DETECT CUSTOM ONNX
 ==========================================================
 */
 
-async function detectCustom(img){
+async function detectCustom(
+  img
+){
 
-  if(!customModel){
+  if(
+    !customModel
+  ){
 
     throw new Error(
       "MODEL_NOT_LOADED"
@@ -529,6 +621,12 @@ async function detectCustom(img){
 
   }
 
+
+  /*
+  --------------------------------------------------------
+  ORIGINAL IMAGE
+  --------------------------------------------------------
+  */
 
   const W =
     img.naturalWidth ||
@@ -542,9 +640,21 @@ async function detectCustom(img){
     img.height;
 
 
+  if(
+    !W ||
+    !H
+  ){
+
+    throw new Error(
+      "IMAGE_SIZE_INVALID"
+    );
+
+  }
+
+
   /*
   --------------------------------------------------------
-  LETTERBOX
+  LETTERBOX SCALE
   --------------------------------------------------------
   */
 
@@ -568,12 +678,18 @@ async function detectCustom(img){
 
 
   const padX =
-    (MODEL_SIZE-newW)/2;
+    (MODEL_SIZE - newW) / 2;
 
 
   const padY =
-    (MODEL_SIZE-newH)/2;
+    (MODEL_SIZE - newH) / 2;
 
+
+  /*
+  --------------------------------------------------------
+  TEMP CANVAS
+  --------------------------------------------------------
+  */
 
   const c =
     document.createElement(
@@ -583,6 +699,7 @@ async function detectCustom(img){
 
   c.width =
     MODEL_SIZE;
+
 
   c.height =
     MODEL_SIZE;
@@ -599,7 +716,7 @@ async function detectCustom(img){
 
   /*
   --------------------------------------------------------
-  YOLO BACKGROUND
+  YOLO LETTERBOX COLOR
   --------------------------------------------------------
   */
 
@@ -614,6 +731,12 @@ async function detectCustom(img){
     MODEL_SIZE
   );
 
+
+  /*
+  --------------------------------------------------------
+  DRAW IMAGE
+  --------------------------------------------------------
+  */
 
   ctx.drawImage(
     img,
@@ -630,11 +753,11 @@ async function detectCustom(img){
 
   /*
   --------------------------------------------------------
-  IMAGE DATA
+  PIXELS
   --------------------------------------------------------
   */
 
-  const data =
+  const pixels =
     ctx.getImageData(
       0,
       0,
@@ -643,22 +766,20 @@ async function detectCustom(img){
     ).data;
 
 
-  const input =
-    new Float32Array(
-      3 *
-      MODEL_SIZE *
-      MODEL_SIZE
-    );
-
-
   const area =
     MODEL_SIZE *
     MODEL_SIZE;
 
 
+  const input =
+    new Float32Array(
+      3 * area
+    );
+
+
   /*
   --------------------------------------------------------
-  HWC -> CHW
+  RGB HWC -> CHW
   --------------------------------------------------------
   */
 
@@ -669,22 +790,25 @@ async function detectCustom(img){
   ){
 
     input[i] =
-      data[i*4] / 255;
+      pixels[i*4] /
+      255;
 
 
     input[area+i] =
-      data[i*4+1] / 255;
+      pixels[i*4+1] /
+      255;
 
 
     input[2*area+i] =
-      data[i*4+2] / 255;
+      pixels[i*4+2] /
+      255;
 
   }
 
 
   /*
   --------------------------------------------------------
-  ONNX INPUT
+  INPUT TENSOR
   --------------------------------------------------------
   */
 
@@ -692,7 +816,7 @@ async function detectCustom(img){
     customModel.inputNames[0];
 
 
-  const tensor =
+  const inputTensor =
     new ort.Tensor(
       "float32",
       input,
@@ -707,7 +831,7 @@ async function detectCustom(img){
 
   /*
   --------------------------------------------------------
-  RUN MODEL
+  RUN ONNX
   --------------------------------------------------------
   */
 
@@ -715,23 +839,33 @@ async function detectCustom(img){
     await customModel.run({
 
       [inputName]:
-        tensor
+        inputTensor
 
     });
 
 
+  const outputName =
+    customModel.outputNames[0];
+
+
   const output =
     outputs[
-      customModel.outputNames[0]
+      outputName
     ];
 
 
-  const a =
+  const data =
     output.data;
 
 
   const dims =
     output.dims;
+
+
+  console.log(
+    "ONNX OUTPUT SHAPE:",
+    dims
+  );
 
 
   /*
@@ -748,7 +882,7 @@ async function detectCustom(img){
   ){
 
     throw new Error(
-      "OUTPUT_SHAPE_TIDAK_DIDUKUNG: "+
+      "OUTPUT_SHAPE_TIDAK_DIDUKUNG: " +
       JSON.stringify(dims)
     );
 
@@ -771,31 +905,31 @@ async function detectCustom(img){
   ){
 
     const o =
-      i*6;
+      i * 6;
 
 
     const x1 =
-      a[o];
+      data[o];
 
 
     const y1 =
-      a[o+1];
+      data[o+1];
 
 
     const x2 =
-      a[o+2];
+      data[o+2];
 
 
     const y2 =
-      a[o+3];
+      data[o+3];
 
 
     const score =
-      a[o+4];
+      data[o+4];
 
 
     const cls =
-      a[o+5];
+      data[o+5];
 
 
     /*
@@ -805,8 +939,8 @@ async function detectCustom(img){
     */
 
     if(
-      score <
-      CONF_THRESHOLD
+      !Number.isFinite(score) ||
+      score < CONF_THRESHOLD
     ){
 
       continue;
@@ -821,7 +955,8 @@ async function detectCustom(img){
     */
 
     if(
-      cls < 0
+      cls !== 0 &&
+      cls !== 0.0
     ){
 
       continue;
@@ -831,44 +966,48 @@ async function detectCustom(img){
 
     /*
     ------------------------------------------------------
-    CONVERT BACK TO ORIGINAL IMAGE
+    CONVERT LETTERBOX -> ORIGINAL
     ------------------------------------------------------
     */
 
     const bx1 =
       Math.max(
         0,
-        (x1-padX)/scale
+        (x1 - padX) /
+        scale
       );
 
 
     const by1 =
       Math.max(
         0,
-        (y1-padY)/scale
+        (y1 - padY) /
+        scale
       );
 
 
     const bx2 =
       Math.min(
         W,
-        (x2-padX)/scale
+        (x2 - padX) /
+        scale
       );
 
 
     const by2 =
       Math.min(
         H,
-        (y2-padY)/scale
+        (y2 - padY) /
+        scale
       );
 
 
     const bw =
-      bx2-bx1;
+      bx2 - bx1;
 
 
     const bh =
-      by2-by1;
+      by2 - by1;
 
 
     if(
@@ -890,7 +1029,9 @@ async function detectCustom(img){
         bh
       ],
 
-      score,
+      score:
+
+        score,
 
       class:
         "sample_product"
@@ -940,7 +1081,9 @@ function source(){
   }
 
 
-  if(current){
+  if(
+    current
+  ){
 
     return current;
 
@@ -956,7 +1099,7 @@ function source(){
 
 /*
 ==========================================================
-CROP PER UNIT
+CROP UNIT
 ==========================================================
 */
 
@@ -989,14 +1132,14 @@ function crop(
   const x1 =
     Math.max(
       0,
-      x-w*padding
+      x - w*padding
     );
 
 
   const y1 =
     Math.max(
       0,
-      y-h*padding
+      y - h*padding
     );
 
 
@@ -1021,11 +1164,17 @@ function crop(
 
 
   c.width =
-    x2-x1;
+    Math.max(
+      1,
+      x2-x1
+    );
 
 
   c.height =
-    y2-y1;
+    Math.max(
+      1,
+      y2-y1
+    );
 
 
   c.getContext("2d")
@@ -1049,7 +1198,7 @@ function crop(
 
 /*
 ==========================================================
-DRAW DETECTIONS
+DRAW
 ==========================================================
 */
 
@@ -1093,7 +1242,8 @@ function draw(
     "#00ff66";
 
 
-  c.lineWidth = 4;
+  c.lineWidth =
+    4;
 
 
   c.font =
@@ -1120,11 +1270,11 @@ function draw(
 
 
       c.fillText(
-        (i+1)+
-        " "+
+        (i+1) +
+        " " +
         Math.round(
           d.score*100
-        )+
+        ) +
         "%",
         x+5,
         Math.max(
@@ -1153,7 +1303,9 @@ OCR
 ==========================================================
 */
 
-async function ocr(c){
+async function ocr(
+  c
+){
 
   const result =
     await Tesseract.recognize(
@@ -1169,10 +1321,11 @@ async function ocr(c){
           ){
 
             msg(
-              "OCR unit... "+
+              "OCR unit... " +
               Math.round(
-                (x.progress||0)*100
-              )+
+                (x.progress || 0) *
+                100
+              ) +
               "%"
             );
 
@@ -1184,7 +1337,10 @@ async function ocr(c){
     );
 
 
-  return result.data.text || "";
+  return (
+    result.data.text ||
+    ""
+  );
 
 }
 
@@ -1203,17 +1359,17 @@ document.querySelector(
 
     stream =
       await navigator.mediaDevices
-        .getUserMedia({
+      .getUserMedia({
 
-          video:{
-            facingMode:{
-              ideal:"environment"
-            }
-          },
+        video:{
+          facingMode:{
+            ideal:"environment"
+          }
+        },
 
-          audio:false
+        audio:false
 
-        });
+      });
 
 
     video.srcObject =
@@ -1229,15 +1385,18 @@ document.querySelector(
 
 
     msg(
-      "Kamera aktif.\n"+
+      "Kamera aktif.\n" +
       "Arahkan ke semua produk lalu tekan Scan."
     );
 
 
   }catch(e){
 
+    console.error(e);
+
+
     msg(
-      "Kamera gagal: "+
+      "Kamera gagal: " +
       e.message,
       "err"
     );
@@ -1257,12 +1416,15 @@ document.querySelector(
   "#stop"
 ).onclick = ()=>{
 
-  if(stream){
+  if(
+    stream
+  ){
 
     stream
       .getTracks()
       .forEach(
-        t=>t.stop()
+        t =>
+          t.stop()
       );
 
 
@@ -1291,7 +1453,9 @@ document.querySelector(
     e.target.files[0];
 
 
-  if(!file){
+  if(
+    !file
+  ){
 
     return;
 
@@ -1319,7 +1483,7 @@ document.querySelector(
 
 
     msg(
-      "Foto siap.\n"+
+      "Foto siap.\n" +
       "Tekan Scan."
     );
 
@@ -1351,45 +1515,29 @@ document.querySelector(
 
     document.querySelector(
       "#prod"
-    ).textContent = "-";
+    ).textContent =
+      "-";
 
 
     document.querySelector(
       "#size"
-    ).textContent = "-";
+    ).textContent =
+      "-";
 
 
     document.querySelector(
       "#count"
-    ).textContent = "0";
+    ).textContent =
+      "0";
 
 
     const img =
       source();
 
 
-    msg(
-      "Mendeteksi setiap unit..."
-    );
-
-
-    let detections = [];
-
-
-    /*
-    ======================================================
-    MODEL UNIVERSAL
-    ======================================================
-    */
-
-    if(customModel){
-
-      detections =
-        await detectCustom(
-          img
-        );
-
-    }else{
+    if(
+      !customModel
+    ){
 
       throw new Error(
         "Model universal belum dimuat."
@@ -1398,9 +1546,26 @@ document.querySelector(
     }
 
 
+    msg(
+      "Mendeteksi setiap unit..."
+    );
+
+
     /*
     ======================================================
-    REMOVE DUPLICATE
+    DETECTION
+    ======================================================
+    */
+
+    let detections =
+      await detectCustom(
+        img
+      );
+
+
+    /*
+    ======================================================
+    DEDUPE
     ======================================================
     */
 
@@ -1421,10 +1586,15 @@ document.querySelector(
     ){
 
       msg(
-        "Tidak ada unit terdeteksi.\n\n"+
-        "Coba foto dengan pencahayaan lebih baik "+
-        "dan produk terlihat jelas.",
+
+        "Tidak ada unit terdeteksi.\n\n" +
+        "Coba:\n" +
+        "• Dekatkan produk\n" +
+        "• Pastikan pencahayaan cukup\n" +
+        "• Pastikan seluruh produk terlihat",
+
         "warn"
+
       );
 
       return;
@@ -1458,11 +1628,12 @@ document.querySelector(
 
     /*
     ======================================================
-    OCR EACH UNIT
+    OCR
     ======================================================
     */
 
-    let allText = "";
+    let allText =
+      "";
 
 
     for(
@@ -1485,7 +1656,7 @@ document.querySelector(
 
 
       allText +=
-        "\n"+
+        "\n" +
         text;
 
 
@@ -1500,9 +1671,9 @@ document.querySelector(
 
 
       div.innerHTML =
-        "<b>Unit "+
-        (i+1)+
-        "</b><br>"+
+        "<b>Unit " +
+        (i+1) +
+        "</b><br>" +
         (
           norm(text) ||
           "(OCR tidak terbaca)"
@@ -1520,7 +1691,7 @@ document.querySelector(
 
     /*
     ======================================================
-    IDENTIFY PRODUCT
+    PRODUCT IDENTIFICATION
     ======================================================
     */
 
@@ -1551,18 +1722,18 @@ document.querySelector(
 
       msg(
 
-        "SELESAI\n\n"+
-        "Produk: "+
-        result.product.name+
-        "\n"+
-        "Size: "+
+        "SELESAI\n\n" +
+        "Produk: " +
+        result.product.name +
+        "\n" +
+        "Size: " +
         sizeOf(
           allText,
           result.product
-        )+
-        "\n"+
-        "Jumlah: "+
-        detections.length+
+        ) +
+        "\n" +
+        "Jumlah: " +
+        detections.length +
         " unit",
 
         "ok"
@@ -1582,10 +1753,10 @@ document.querySelector(
 
       msg(
 
-        "Jumlah: "+
-        detections.length+
-        " unit.\n"+
-        "OCR selesai tetapi produk belum ada "+
+        "Jumlah: " +
+        detections.length +
+        " unit.\n" +
+        "OCR selesai tetapi produk belum ada " +
         "di Product Master.",
 
         "warn"
@@ -1597,13 +1768,19 @@ document.querySelector(
 
   }catch(e){
 
-    console.error(e);
+    console.error(
+      "SCAN ERROR:",
+      e
+    );
 
 
     msg(
-      "Scan gagal: "+
+
+      "Scan gagal: " +
       e.message,
+
       "err"
+
     );
 
   }
@@ -1621,7 +1798,15 @@ LOAD ONNX MODEL
 
   try{
 
-    if(!window.ort){
+    /*
+    ------------------------------------------------------
+    CHECK ORT
+    ------------------------------------------------------
+    */
+
+    if(
+      !window.ort
+    ){
 
       throw new Error(
         "ONNX Runtime Web tidak termuat."
@@ -1632,13 +1817,38 @@ LOAD ONNX MODEL
 
     /*
     ------------------------------------------------------
-    WASM
+    WASM CONFIG
     ------------------------------------------------------
     */
 
-    ort.env.wasm.numThreads = 1;
+    ort.env.wasm.numThreads =
+      1;
 
-    ort.env.wasm.simd = true;
+
+    ort.env.wasm.simd =
+      true;
+
+
+    /*
+    ------------------------------------------------------
+    PENTING:
+    ARAHKAN WASM KE CDN
+    ------------------------------------------------------
+    */
+
+    ort.env.wasm.wasmPaths =
+      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";
+
+
+    /*
+    ------------------------------------------------------
+    STATUS
+    ------------------------------------------------------
+    */
+
+    msg(
+      "Memuat model universal ONNX..."
+    );
 
 
     /*
@@ -1651,16 +1861,56 @@ LOAD ONNX MODEL
       await ort.InferenceSession.create(
         CUSTOM_MODEL_URL,
         {
+
           executionProviders:[
             "wasm"
-          ]
+          ],
+
+          graphOptimizationLevel:
+            "all"
+
         }
       );
 
 
+    /*
+    ------------------------------------------------------
+    DEBUG INFO
+    ------------------------------------------------------
+    */
+
+    console.log(
+      "================================"
+    );
+
+    console.log(
+      "ONNX MODEL LOADED"
+    );
+
+    console.log(
+      "Input:",
+      customModel.inputNames
+    );
+
+    console.log(
+      "Output:",
+      customModel.outputNames
+    );
+
+    console.log(
+      "================================"
+    );
+
+
+    /*
+    ------------------------------------------------------
+    READY
+    ------------------------------------------------------
+    */
+
     msg(
 
-      "Model universal ONNX siap.\n"+
+      "Model universal ONNX siap.\n" +
       "Siap mendeteksi sample_product.",
 
       "ok"
@@ -1670,14 +1920,18 @@ LOAD ONNX MODEL
 
   }catch(e){
 
-    console.error(e);
+    console.error(
+      "ONNX LOAD ERROR:",
+      e
+    );
 
 
     msg(
 
-      "Model universal gagal dimuat.\n\n"+
-      "Pastikan file berada di:\n"+
-      "model/sample_product.onnx\n\n"+
+      "MODEL GAGAL DIMUAT\n\n" +
+      "Pastikan file ada di:\n" +
+      "model/sample_product.onnx\n\n" +
+      "Error:\n" +
       e.message,
 
       "err"
