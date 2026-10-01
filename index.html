@@ -7,10 +7,14 @@
 <title>Scan Produk V8 - Universal</title>
 
 <!-- ONNX Runtime Web -->
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js">
+</script>
 
-<!-- OCR -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<!-- Tesseract OCR -->
+<script
+  src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js">
+</script>
 
 <style>
 
@@ -19,7 +23,7 @@ body{
   background:#f3f5f7;
   font-family:Arial,sans-serif;
   padding:16px;
-  color:#18222b
+  color:#18222b;
 }
 
 .card{
@@ -28,11 +32,11 @@ body{
   background:white;
   border-radius:18px;
   padding:18px;
-  box-shadow:0 8px 28px #0001
+  box-shadow:0 8px 28px #0001;
 }
 
 h2{
-  margin-top:0
+  margin-top:0;
 }
 
 button,
@@ -45,11 +49,11 @@ label{
   font-weight:bold;
   cursor:pointer;
   display:inline-block;
-  margin:4px
+  margin:4px;
 }
 
 input{
-  display:none
+  display:none;
 }
 
 #view,
@@ -60,11 +64,11 @@ input{
   object-fit:contain;
   background:#111;
   border-radius:14px;
-  margin-top:12px
+  margin-top:12px;
 }
 
 #overlay{
-  display:none
+  display:none;
 }
 
 #status{
@@ -72,55 +76,56 @@ input{
   border-radius:12px;
   padding:12px;
   margin-top:12px;
-  white-space:pre-wrap
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
 }
 
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:10px;
-  margin-top:12px
+  margin-top:12px;
 }
 
 .box{
   background:#f5f7f9;
   border-radius:12px;
   padding:12px;
-  text-align:center
+  text-align:center;
 }
 
 .box small{
   display:block;
-  color:#667
+  color:#667;
 }
 
 .box b{
-  font-size:20px
+  font-size:20px;
 }
 
 .unit{
   border:1px solid #ddd;
   border-radius:9px;
   padding:9px;
-  margin-top:7px
+  margin-top:7px;
 }
 
 .ok{
-  color:#146c38
+  color:#146c38;
 }
 
 .warn{
-  color:#946000
+  color:#946000;
 }
 
 .err{
-  color:#a0182b
+  color:#a0182b;
 }
 
 @media(max-width:600px){
 
   .grid{
-    grid-template-columns:1fr
+    grid-template-columns:1fr;
   }
 
 }
@@ -139,9 +144,11 @@ input{
 Multi-product • OCR per unit • Universal Packaging
 </p>
 
+
 <button id="cam">
 📷 Kamera
 </button>
+
 
 <label>
 🖼️ Upload
@@ -151,9 +158,11 @@ Multi-product • OCR per unit • Universal Packaging
   accept="image/*">
 </label>
 
+
 <button id="stop">
 ⏹ Stop
 </button>
+
 
 <button id="scan">
 🔎 Scan
@@ -179,26 +188,28 @@ Multi-product • OCR per unit • Universal Packaging
 
 
 <div id="status">
-Memuat model...
+Memulai sistem...
 </div>
 
 
 <div class="grid">
 
-  <div class="box">
-    <small>PRODUK</small>
-    <b id="prod">-</b>
-  </div>
+<div class="box">
+<small>PRODUK</small>
+<b id="prod">-</b>
+</div>
 
-  <div class="box">
-    <small>SIZE</small>
-    <b id="size">-</b>
-  </div>
 
-  <div class="box">
-    <small>JUMLAH</small>
-    <b id="count">0</b>
-  </div>
+<div class="box">
+<small>SIZE</small>
+<b id="size">-</b>
+</div>
+
+
+<div class="box">
+<small>JUMLAH</small>
+<b id="count">0</b>
+</div>
 
 </div>
 
@@ -216,30 +227,23 @@ SCAN PRODUK V8
 UNIVERSAL SAMPLE PRODUCT
 ==========================================================
 
-ALUR:
+MODEL:
 
-FOTO
- ↓
-YOLO26 ONNX
- ↓
-DETEKSI sample_product
- ↓
-CROP PER UNIT
- ↓
-OCR
- ↓
-IDENTIFIKASI PRODUK
- ↓
-JUMLAH
-
-Model:
 sample_product.onnx
 
-Output:
-(1, 300, 6)
+Input:
+1 x 3 x 640 x 640
 
-Format:
+Output:
+1 x 300 x 6
+
+Output format:
+
 [x1, y1, x2, y2, confidence, class]
+
+Class:
+
+0 = sample_product
 
 ==========================================================
 */
@@ -247,17 +251,15 @@ Format:
 
 /*
 ==========================================================
-MODEL
+MODEL CONFIG
 ==========================================================
 */
 
 const CUSTOM_MODEL_URL =
   "./model/sample_product.onnx";
 
-
 const MODEL_SIZE =
   640;
-
 
 const CONF_THRESHOLD =
   0.35;
@@ -285,7 +287,6 @@ const PRODUCTS = [
       "POVIDONE IODINE",
       "POVIDONE"
     ]
-
   }
 
 ];
@@ -313,14 +314,11 @@ ELEMENT
 const video =
   document.querySelector("#video");
 
-
 const view =
   document.querySelector("#view");
 
-
 const canvas =
   document.querySelector("#overlay");
-
 
 const status =
   document.querySelector("#status");
@@ -348,7 +346,7 @@ function msg(
 
 /*
 ==========================================================
-NORMALIZE
+NORMALIZE OCR
 ==========================================================
 */
 
@@ -382,7 +380,6 @@ function identify(text){
   const t =
     norm(text);
 
-
   let best = null;
 
   let score = 0;
@@ -401,7 +398,7 @@ function identify(text){
       )
     ){
 
-      s = .95;
+      s = 0.95;
 
     }
 
@@ -419,10 +416,10 @@ function identify(text){
         s =
           Math.max(
             s,
-            .55 +
+            0.55 +
             Math.min(
               alias.length / 100,
-              .35
+              0.35
             )
           );
 
@@ -539,8 +536,8 @@ function iou(
 
 
   const union =
-    areaA +
-    areaB -
+    areaA+
+    areaB-
     inter;
 
 
@@ -557,7 +554,7 @@ function iou(
 
 /*
 ==========================================================
-DEDUPE
+REMOVE DUPLICATE BOX
 ==========================================================
 */
 
@@ -567,8 +564,7 @@ function dedupe(
 
   ds.sort(
     (a,b)=>
-      b.score -
-      a.score
+      b.score-a.score
   );
 
 
@@ -585,7 +581,7 @@ function dedupe(
           iou(
             x.bbox,
             d.bbox
-          ) > .5
+          ) > 0.5
       )
     ){
 
@@ -603,7 +599,7 @@ function dedupe(
 
 /*
 ==========================================================
-DETECT CUSTOM ONNX
+DETECT WITH ONNX
 ==========================================================
 */
 
@@ -624,7 +620,7 @@ async function detectCustom(
 
   /*
   --------------------------------------------------------
-  ORIGINAL IMAGE
+  IMAGE SIZE
   --------------------------------------------------------
   */
 
@@ -654,7 +650,7 @@ async function detectCustom(
 
   /*
   --------------------------------------------------------
-  LETTERBOX SCALE
+  LETTERBOX
   --------------------------------------------------------
   */
 
@@ -678,16 +674,16 @@ async function detectCustom(
 
 
   const padX =
-    (MODEL_SIZE - newW) / 2;
+    (MODEL_SIZE-newW)/2;
 
 
   const padY =
-    (MODEL_SIZE - newH) / 2;
+    (MODEL_SIZE-newH)/2;
 
 
   /*
   --------------------------------------------------------
-  TEMP CANVAS
+  CANVAS
   --------------------------------------------------------
   */
 
@@ -716,7 +712,7 @@ async function detectCustom(
 
   /*
   --------------------------------------------------------
-  YOLO LETTERBOX COLOR
+  YOLO BACKGROUND
   --------------------------------------------------------
   */
 
@@ -773,13 +769,13 @@ async function detectCustom(
 
   const input =
     new Float32Array(
-      3 * area
+      3*area
     );
 
 
   /*
   --------------------------------------------------------
-  RGB HWC -> CHW
+  RGB -> CHW
   --------------------------------------------------------
   */
 
@@ -790,25 +786,22 @@ async function detectCustom(
   ){
 
     input[i] =
-      pixels[i*4] /
-      255;
+      pixels[i*4]/255;
 
 
     input[area+i] =
-      pixels[i*4+1] /
-      255;
+      pixels[i*4+1]/255;
 
 
     input[2*area+i] =
-      pixels[i*4+2] /
-      255;
+      pixels[i*4+2]/255;
 
   }
 
 
   /*
   --------------------------------------------------------
-  INPUT TENSOR
+  INPUT
   --------------------------------------------------------
   */
 
@@ -831,7 +824,7 @@ async function detectCustom(
 
   /*
   --------------------------------------------------------
-  RUN ONNX
+  INFERENCE
   --------------------------------------------------------
   */
 
@@ -882,7 +875,7 @@ async function detectCustom(
   ){
 
     throw new Error(
-      "OUTPUT_SHAPE_TIDAK_DIDUKUNG: " +
+      "OUTPUT_SHAPE_TIDAK_DIDUKUNG: "+
       JSON.stringify(dims)
     );
 
@@ -905,7 +898,7 @@ async function detectCustom(
   ){
 
     const o =
-      i * 6;
+      i*6;
 
 
     const x1 =
@@ -950,7 +943,7 @@ async function detectCustom(
 
     /*
     ------------------------------------------------------
-    ONLY CLASS 0
+    CLASS 0
     ------------------------------------------------------
     */
 
@@ -966,48 +959,44 @@ async function detectCustom(
 
     /*
     ------------------------------------------------------
-    CONVERT LETTERBOX -> ORIGINAL
+    MAP BACK TO ORIGINAL IMAGE
     ------------------------------------------------------
     */
 
     const bx1 =
       Math.max(
         0,
-        (x1 - padX) /
-        scale
+        (x1-padX)/scale
       );
 
 
     const by1 =
       Math.max(
         0,
-        (y1 - padY) /
-        scale
+        (y1-padY)/scale
       );
 
 
     const bx2 =
       Math.min(
         W,
-        (x2 - padX) /
-        scale
+        (x2-padX)/scale
       );
 
 
     const by2 =
       Math.min(
         H,
-        (y2 - padY) /
-        scale
+        (y2-padY)/scale
       );
 
 
     const bw =
-      bx2 - bx1;
+      bx2-bx1;
 
 
     const bh =
-      by2 - by1;
+      by2-by1;
 
 
     if(
@@ -1106,7 +1095,7 @@ CROP UNIT
 function crop(
   img,
   bbox,
-  padding=.08
+  padding=0.08
 ){
 
   const [
@@ -1132,14 +1121,14 @@ function crop(
   const x1 =
     Math.max(
       0,
-      x - w*padding
+      x-w*padding
     );
 
 
   const y1 =
     Math.max(
       0,
-      y - h*padding
+      y-h*padding
     );
 
 
@@ -1198,7 +1187,7 @@ function crop(
 
 /*
 ==========================================================
-DRAW
+DRAW DETECTION
 ==========================================================
 */
 
@@ -1270,11 +1259,11 @@ function draw(
 
 
       c.fillText(
-        (i+1) +
-        " " +
+        (i+1)+
+        " "+
         Math.round(
           d.score*100
-        ) +
+        )+
         "%",
         x+5,
         Math.max(
@@ -1321,11 +1310,10 @@ async function ocr(
           ){
 
             msg(
-              "OCR unit... " +
+              "OCR unit... "+
               Math.round(
-                (x.progress || 0) *
-                100
-              ) +
+                (x.progress||0)*100
+              )+
               "%"
             );
 
@@ -1353,7 +1341,8 @@ CAMERA
 
 document.querySelector(
   "#cam"
-).onclick = async()=>{
+).onclick =
+async()=>{
 
   try{
 
@@ -1385,7 +1374,7 @@ document.querySelector(
 
 
     msg(
-      "Kamera aktif.\n" +
+      "Kamera aktif.\n"+
       "Arahkan ke semua produk lalu tekan Scan."
     );
 
@@ -1396,7 +1385,7 @@ document.querySelector(
 
 
     msg(
-      "Kamera gagal: " +
+      "Kamera gagal: "+
       e.message,
       "err"
     );
@@ -1414,7 +1403,8 @@ STOP CAMERA
 
 document.querySelector(
   "#stop"
-).onclick = ()=>{
+).onclick =
+()=>{
 
   if(
     stream
@@ -1447,7 +1437,8 @@ UPLOAD
 
 document.querySelector(
   "#file"
-).onchange = e=>{
+).onchange =
+e=>{
 
   const file =
     e.target.files[0];
@@ -1468,7 +1459,8 @@ document.querySelector(
     );
 
 
-  view.onload = ()=>{
+  view.onload =
+  ()=>{
 
     current =
       view;
@@ -1483,7 +1475,7 @@ document.querySelector(
 
 
     msg(
-      "Foto siap.\n" +
+      "Foto siap.\n"+
       "Tekan Scan."
     );
 
@@ -1504,13 +1496,15 @@ SCAN
 
 document.querySelector(
   "#scan"
-).onclick = async()=>{
+).onclick =
+async()=>{
 
   try{
 
     document.querySelector(
       "#units"
-    ).innerHTML = "";
+    ).innerHTML =
+      "";
 
 
     document.querySelector(
@@ -1551,23 +1545,11 @@ document.querySelector(
     );
 
 
-    /*
-    ======================================================
-    DETECTION
-    ======================================================
-    */
-
     let detections =
       await detectCustom(
         img
       );
 
-
-    /*
-    ======================================================
-    DEDUPE
-    ======================================================
-    */
 
     detections =
       dedupe(
@@ -1576,9 +1558,9 @@ document.querySelector(
 
 
     /*
-    ======================================================
+    --------------------------------------------------------
     NO DETECTION
-    ======================================================
+    --------------------------------------------------------
     */
 
     if(
@@ -1587,11 +1569,8 @@ document.querySelector(
 
       msg(
 
-        "Tidak ada unit terdeteksi.\n\n" +
-        "Coba:\n" +
-        "• Dekatkan produk\n" +
-        "• Pastikan pencahayaan cukup\n" +
-        "• Pastikan seluruh produk terlihat",
+        "Tidak ada unit terdeteksi.\n\n"+
+        "Coba foto dengan pencahayaan lebih baik.",
 
         "warn"
 
@@ -1603,9 +1582,9 @@ document.querySelector(
 
 
     /*
-    ======================================================
+    --------------------------------------------------------
     DRAW
-    ======================================================
+    --------------------------------------------------------
     */
 
     draw(
@@ -1615,9 +1594,9 @@ document.querySelector(
 
 
     /*
-    ======================================================
+    --------------------------------------------------------
     COUNT
-    ======================================================
+    --------------------------------------------------------
     */
 
     document.querySelector(
@@ -1627,9 +1606,9 @@ document.querySelector(
 
 
     /*
-    ======================================================
+    --------------------------------------------------------
     OCR
-    ======================================================
+    --------------------------------------------------------
     */
 
     let allText =
@@ -1656,7 +1635,7 @@ document.querySelector(
 
 
       allText +=
-        "\n" +
+        "\n"+
         text;
 
 
@@ -1671,9 +1650,9 @@ document.querySelector(
 
 
       div.innerHTML =
-        "<b>Unit " +
-        (i+1) +
-        "</b><br>" +
+        "<b>Unit "+
+        (i+1)+
+        "</b><br>"+
         (
           norm(text) ||
           "(OCR tidak terbaca)"
@@ -1690,9 +1669,9 @@ document.querySelector(
 
 
     /*
-    ======================================================
-    PRODUCT IDENTIFICATION
-    ======================================================
+    --------------------------------------------------------
+    IDENTIFY PRODUCT
+    --------------------------------------------------------
     */
 
     const result =
@@ -1722,18 +1701,18 @@ document.querySelector(
 
       msg(
 
-        "SELESAI\n\n" +
-        "Produk: " +
-        result.product.name +
-        "\n" +
-        "Size: " +
+        "SELESAI\n\n"+
+        "Produk: "+
+        result.product.name+
+        "\n"+
+        "Size: "+
         sizeOf(
           allText,
           result.product
-        ) +
-        "\n" +
-        "Jumlah: " +
-        detections.length +
+        )+
+        "\n"+
+        "Jumlah: "+
+        detections.length+
         " unit",
 
         "ok"
@@ -1753,10 +1732,10 @@ document.querySelector(
 
       msg(
 
-        "Jumlah: " +
-        detections.length +
-        " unit.\n" +
-        "OCR selesai tetapi produk belum ada " +
+        "Jumlah: "+
+        detections.length+
+        " unit.\n"+
+        "OCR selesai tetapi produk belum ada "+
         "di Product Master.",
 
         "warn"
@@ -1776,7 +1755,7 @@ document.querySelector(
 
     msg(
 
-      "Scan gagal: " +
+      "SCAN GAGAL\n\n"+
       e.message,
 
       "err"
@@ -1790,7 +1769,7 @@ document.querySelector(
 
 /*
 ==========================================================
-LOAD ONNX MODEL
+LOAD ONNX MODEL + DIAGNOSTIC
 ==========================================================
 */
 
@@ -1800,7 +1779,8 @@ LOAD ONNX MODEL
 
     /*
     ------------------------------------------------------
-    CHECK ORT
+    STEP 1
+    CHECK ONNX RUNTIME
     ------------------------------------------------------
     */
 
@@ -1809,15 +1789,22 @@ LOAD ONNX MODEL
     ){
 
       throw new Error(
-        "ONNX Runtime Web tidak termuat."
+        "ONNX Runtime Web tidak termuat dari CDN."
       );
 
     }
 
 
+    console.log(
+      "ONNX Runtime:",
+      ort.version
+    );
+
+
     /*
     ------------------------------------------------------
-    WASM CONFIG
+    STEP 2
+    SET WASM
     ------------------------------------------------------
     */
 
@@ -1829,31 +1816,101 @@ LOAD ONNX MODEL
       true;
 
 
-    /*
-    ------------------------------------------------------
-    PENTING:
-    ARAHKAN WASM KE CDN
-    ------------------------------------------------------
-    */
-
     ort.env.wasm.wasmPaths =
       "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/";
 
 
     /*
     ------------------------------------------------------
-    STATUS
+    STEP 3
+    CHECK MODEL URL
     ------------------------------------------------------
     */
 
     msg(
-      "Memuat model universal ONNX..."
+      "Memeriksa file model..."
+    );
+
+
+    console.log(
+      "MODEL URL:",
+      CUSTOM_MODEL_URL
+    );
+
+
+    let response;
+
+
+    try{
+
+      response =
+        await fetch(
+          CUSTOM_MODEL_URL,
+          {
+            method:"HEAD",
+            cache:"no-store"
+          }
+        );
+
+    }catch(fetchError){
+
+      throw new Error(
+        "File model tidak bisa diakses.\n"+
+        "URL: "+
+        CUSTOM_MODEL_URL+
+        "\n"+
+        "Fetch error: "+
+        fetchError.message
+      );
+
+    }
+
+
+    console.log(
+      "MODEL HTTP STATUS:",
+      response.status
     );
 
 
     /*
     ------------------------------------------------------
-    LOAD MODEL
+    CHECK HTTP
+    ------------------------------------------------------
+    */
+
+    if(
+      !response.ok
+    ){
+
+      throw new Error(
+        "Model tidak ditemukan.\n"+
+        "HTTP Status: "+
+        response.status+
+        "\n"+
+        "URL: "+
+        CUSTOM_MODEL_URL
+      );
+
+    }
+
+
+    /*
+    ------------------------------------------------------
+    STEP 4
+    MODEL FOUND
+    ------------------------------------------------------
+    */
+
+    msg(
+      "File model ditemukan.\n"+
+      "Memuat ONNX..."
+    );
+
+
+    /*
+    ------------------------------------------------------
+    STEP 5
+    LOAD ONNX
     ------------------------------------------------------
     */
 
@@ -1875,7 +1932,7 @@ LOAD ONNX MODEL
 
     /*
     ------------------------------------------------------
-    DEBUG INFO
+    DEBUG
     ------------------------------------------------------
     */
 
@@ -1883,19 +1940,23 @@ LOAD ONNX MODEL
       "================================"
     );
 
-    console.log(
-      "ONNX MODEL LOADED"
-    );
 
     console.log(
-      "Input:",
+      "MODEL BERHASIL DIMUAT"
+    );
+
+
+    console.log(
+      "INPUT NAMES:",
       customModel.inputNames
     );
 
+
     console.log(
-      "Output:",
+      "OUTPUT NAMES:",
       customModel.outputNames
     );
+
 
     console.log(
       "================================"
@@ -1910,8 +1971,9 @@ LOAD ONNX MODEL
 
     msg(
 
-      "Model universal ONNX siap.\n" +
-      "Siap mendeteksi sample_product.",
+      "MODEL SIAP ✅\n\n"+
+      "Universal sample_product\n"+
+      "Siap melakukan deteksi.",
 
       "ok"
 
@@ -1920,19 +1982,48 @@ LOAD ONNX MODEL
 
   }catch(e){
 
+    /*
+    ------------------------------------------------------
+    ERROR DETAIL
+    ------------------------------------------------------
+    */
+
     console.error(
-      "ONNX LOAD ERROR:",
+      "================================"
+    );
+
+
+    console.error(
+      "ONNX LOAD ERROR"
+    );
+
+
+    console.error(
       e
     );
 
 
+    console.error(
+      "================================"
+    );
+
+
+    const detail =
+      e && e.message
+      ? e.message
+      : String(e);
+
+
     msg(
 
-      "MODEL GAGAL DIMUAT\n\n" +
-      "Pastikan file ada di:\n" +
-      "model/sample_product.onnx\n\n" +
-      "Error:\n" +
-      e.message,
+      "MODEL GAGAL DIMUAT ❌\n\n"+
+      "URL MODEL:\n"+
+      CUSTOM_MODEL_URL+
+      "\n\n"+
+      "ERROR:\n"+
+      detail+
+      "\n\n"+
+      "Buka Console browser jika perlu.",
 
       "err"
 
